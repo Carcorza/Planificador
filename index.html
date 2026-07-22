@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-title" content="Planeador">
     <meta name="apple-mobile-web-app-status-bar-style" content="#0f172a">
     
-    <link id="favicon" rel="icon" type="image/svg+xml" href="">
+    <link id="favicon" rel="icon" href="">
     <link id="apple-icon" rel="apple-touch-icon" href="">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -27,7 +27,7 @@
             --warning: #f59e0b;
             --border: #e2e8f0;
             --sidebar-bg: #0f172a;
-            --share: #8b5cf6; /* Color para el botón de compartir */
+            --share: #8b5cf6;
         }
 
         /* --- MEJORAS NATIVAS --- */
@@ -242,7 +242,6 @@
                         <div class="input-icon-wrapper"><i class="fa-solid fa-comment-dots" style="top: 15px;"></i><textarea id="taskObs" style="height: 60px; padding-top: 10px;" placeholder="Detalles..."></textarea></div>
                     </div>
 
-                    <!-- NUEVO: CAMPO PARA ADJUNTAR ARCHIVOS -->
                     <div class="form-group file-upload-wrapper">
                         <label><i class="fa-solid fa-paperclip" style="color:var(--primary);"></i> Adjuntar Foto o Documento</label>
                         <div class="input-icon-wrapper">
@@ -284,11 +283,37 @@
     </div>
 
     <script>
-        const shieldSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c15 0 29.3 6.9 38.6 18.6L465.1 231c7.3 9.1 10.9 20.6 10.9 32V416c0 53-43 96-96 96H132c-53 0-96-43-96-96V263c0-11.4 3.6-22.9 10.9-32L217.4 18.6c9.3-11.7 23.6-18.6 38.6-18.6z' fill='%2310b981'/><path d='M256 0V512c53 0 96-43 96-96V263c0-11.4-3.6-22.9-10.9-32L256 0z' fill='%232563eb'/></svg>`;
-        const svgDataUri = "data:image/svg+xml;utf8," + encodeURIComponent(shieldSvg);
-        document.getElementById('favicon').href = svgDataUri;
-        document.getElementById('apple-icon').href = svgDataUri;
+        // --- RECURSOS DEL ICONO DESDE GOOGLE DRIVE ---
+        const iconUrl = "https://drive.google.com/uc?id=1Rqibq1r_l08P7eqd2WGZAIhU2oGS6a4l";
+        document.getElementById('favicon').href = iconUrl;
+        document.getElementById('apple-icon').href = iconUrl;
 
+        // --- MANIFIESTO WEB ---
+        const manifest = {
+            "short_name": "Planeador",
+            "name": "Planeador de Pendientes",
+            "icons": [
+                {
+                    "src": iconUrl,
+                    "type": "image/jpeg",
+                    "sizes": "512x512",
+                    "purpose": "any maskable"
+                }
+            ],
+            "start_url": window.location.href,
+            "background_color": "#0f172a",
+            "theme_color": "#0f172a",
+            "display": "standalone",
+            "orientation": "portrait"
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
+
+        // Variables de datos - Inicia limpio sin carpetas por defecto
         let folders = JSON.parse(localStorage.getItem('planner_folders')) || [];
         let tasks = JSON.parse(localStorage.getItem('planner_tasks')) || [];
         let selectedFolder = null;
@@ -396,7 +421,7 @@
                 document.getElementById('taskPhone').value = task.phone;
                 document.getElementById('taskPriority').value = task.priority;
                 document.getElementById('taskObs').value = task.observation;
-                document.getElementById('taskFile').value = ''; // Limpiar input file visual
+                document.getElementById('taskFile').value = ''; 
                 
                 document.getElementById('formHeaderTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Editar Pendiente`;
                 document.getElementById('btnText').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
@@ -420,7 +445,6 @@
                 reader.onload = function(event) {
                     const base64Str = event.target.result;
 
-                    // Comprimir si es imagen para proteger la memoria del navegador
                     if (file.type.startsWith('image/')) {
                         const img = new Image();
                         img.onload = () => {
@@ -437,7 +461,6 @@
                         };
                         img.src = base64Str;
                     } else {
-                        // Limitar documentos a 1.5MB
                         if (file.size > 1.5 * 1024 * 1024) {
                             alert("El documento pesa más de 1.5MB y no se guardará para evitar saturar la aplicación.");
                             resolve(null);
@@ -459,7 +482,6 @@
                 text: `*${task.name}*\nCarpeta: ${task.folder}\nFecha: ${task.date} - ${task.time}\nDetalles: ${task.observation || 'Sin observaciones.'}`
             };
 
-            // Reconstruir archivo adjunto si existe
             if (task.fileBase64) {
                 try {
                     const res = await fetch(task.fileBase64);
@@ -472,10 +494,9 @@
             }
 
             try {
-                await navigator.share(shareData); // Lanza el menú de iOS/Android (Mail, WhatsApp, etc.)
+                await navigator.share(shareData); 
             } catch (err) {
                 if (err.name !== 'AbortError') {
-                    // Fallback a mail normal si el dispositivo falla
                     window.location.href = `mailto:?subject=${encodeURIComponent(shareData.title)}&body=${encodeURIComponent(shareData.text)}`;
                 }
             }
@@ -484,7 +505,6 @@
         async function saveTask(event) {
             event.preventDefault();
             
-            // UI de carga
             document.getElementById('btnText').style.opacity = '0';
             document.getElementById('btnSpinner').style.display = 'block';
 
@@ -496,7 +516,6 @@
                 fileData = await processFile(fileInput.files[0]);
             }
 
-            // Buscar tarea existente para no borrar su archivo viejo si no se sube uno nuevo
             const existingTask = id ? tasks.find(t => t.id === id) : null;
 
             const task = {
@@ -523,7 +542,6 @@
 
             saveData(); renderFolders(); renderTasks(); 
 
-            // Finalizar UI
             document.getElementById('btnText').style.opacity = '1';
             document.getElementById('btnSpinner').style.display = 'none';
 
@@ -619,6 +637,7 @@
             closeModalWindow();
         }
 
+        // --- REGISTRO DEL SERVICE WORKER ---
         if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
     </script>
 </body>
