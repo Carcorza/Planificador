@@ -566,7 +566,7 @@
         document.head.appendChild(manifestLink);
 
         // Variables de datos
-        let folders = JSON.parse(localStorage.getItem('planner_folders')) || ['Maira', 'Carlos', 'Javier', 'Maria Fernanda', 'Marcela'];
+        let folders = JSON.parse(localStorage.getItem('planner_folders')) || [];
         let tasks = JSON.parse(localStorage.getItem('planner_tasks')) || [];
         let selectedFolder = null;
         let currentClosingTaskId = null;
