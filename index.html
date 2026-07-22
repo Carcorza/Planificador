@@ -3,677 +3,1116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard de Llamadas</title>
+    <title>Planeador de Pendientes</title>
     
-    <!-- Librería para gráficos -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Configuración para el icono y modo Aplicación en la Pantalla de Inicio (PWA) -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Planeador">
+    <meta name="apple-mobile-web-app-status-bar-style" content="#0f172a">
+    
+    <!-- Icono de Escudo Azul/Verde Profesional -->
+    <link id="favicon" rel="icon" type="image/svg+xml" href="">
+    <link id="apple-icon" rel="apple-touch-icon" href="">
 
+    <!-- Iconos profesionales -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         :root {
-            --primary: #4361ee;
-            --secondary: #3f37c9;
-            --bg: #f8f9fa;
-            --card-bg: #ffffff;
-            --text: #333333;
+            --bg-main: #f0f4f8;
+            --bg-card: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --border: #e2e8f0;
+            --sidebar-bg: #0f172a;
         }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 15px;
-        }
-        h2 {
-            text-align: center;
-            color: var(--primary);
-            margin-top: 0;
-        }
-        
-        /* =========================================
-           NUEVO: Estilos para los botones de las pestañas
-           ========================================= */
-        .tab-container {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .tab-btn {
-            padding: 10px 20px;
-            cursor: pointer;
-            background-color: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            font-size: 16px;
-            font-weight: bold;
-            transition: background-color 0.3s;
-        }
-        .tab-btn:hover {
-            background-color: #5a6268;
-        }
-        .tab-btn.active {
-            background-color: var(--primary);
-        }
-        .hidden-view {
-            display: none !important;
-        }
-        /* ========================================= */
 
-        .controls {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            margin-bottom: 20px;
-            align-items: flex-end;
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
         }
-        .control-group {
-            flex: 1;
-            min-width: 140px;
+
+        body {
+            background-color: var(--bg-main);
+            color: var(--text-main);
             display: flex;
             flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
         }
-        label {
-            font-size: 0.85em;
-            font-weight: bold;
-            margin-bottom: 5px;
-            color: #555;
+
+        @media (min-width: 768px) {
+            body { flex-direction: row; }
+            aside {
+                width: 320px !important;
+                height: 100% !important;
+                position: relative !important;
+                transform: translateX(0) !important;
+            }
+            main { flex: 1; height: 100vh; }
         }
-        input[type="date"], select, button {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-            font-family: inherit;
-            background-color: white;
-            font-size: 0.95em;
-            outline: none;
+
+        /* CABECERA MÓVIL */
+        .mobile-header {
+            background-color: var(--sidebar-bg);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
-        select, button {
-            cursor: pointer;
+
+        .mobile-header h1 { font-size: 1.2rem; display: flex; align-items: center; gap: 10px; }
+        .menu-toggle-btn {
+            background: #1e293b; border: 1px solid #334155; color: white;
+            padding: 8px 12px; border-radius: 6px; cursor: pointer; font-size: 0.9rem;
         }
-        .btn-export {
-            background-color: #10b981;
+
+        /* BARRA LATERAL */
+        aside {
+            width: 280px; background-color: var(--sidebar-bg); color: white;
+            display: flex; flex-direction: column; padding: 20px;
+            position: absolute; top: 0; left: 0; height: 100%; z-index: 101;
+            transform: translateX(-100%); transition: transform 0.3s ease;
+            box-shadow: 5px 0 15px rgba(0,0,0,0.2);
+        }
+        aside.open { transform: translateX(0); }
+        aside h2 {
+            font-size: 1.1rem; margin-bottom: 20px; text-transform: uppercase;
+            letter-spacing: 1px; color: #94a3b8; display: flex; align-items: center; justify-content: space-between;
+        }
+        .close-sidebar-btn { background: transparent; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+
+        .folder-form { display: flex; gap: 8px; margin-bottom: 20px; }
+        .folder-form input {
+            flex: 1; padding: 10px 12px; border-radius: 8px; border: 1px solid #334155;
+            background-color: #1e293b; color: white; outline: none; font-size: 0.95rem;
+        }
+        .folder-form button { background-color: var(--primary); color: white; border: none; width: 42px; border-radius: 8px; cursor: pointer; }
+
+        .folder-list { list-style: none; overflow-y: auto; flex: 1; }
+        .folder-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 14px; border-radius: 8px; margin-bottom: 8px; cursor: pointer; background-color: #1e293b;
+        }
+        .folder-item.active { background-color: var(--primary); }
+        .folder-name-container { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .delete-folder-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; }
+
+        /* Botón de instalación PWA en la barra lateral */
+        .pwa-install-btn {
+            background-color: var(--success);
             color: white;
             border: none;
+            padding: 12px;
+            border-radius: 8px;
             font-weight: bold;
-            padding: 10px 15px;
-            transition: background 0.3s;
+            font-size: 0.9rem;
+            cursor: pointer;
+            margin-top: 15px;
+            display: none; /* Se activa si el navegador lo permite */
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(16, 185, 129, 0.2);
         }
-        .btn-export:hover {
-            background-color: #059669;
-        }
-        .kpi-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        .kpi-card {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 10px;
-            text-align: center;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .kpi-value {
-            font-size: 1.8em;
-            font-weight: bold;
-            color: var(--primary);
-        }
-        .kpi-label {
-            font-size: 0.85em;
-            color: #666;
-            text-transform: capitalize;
-        }
-        
-        /* Contenedor dinámico para organizar los 3 gráficos */
-        .charts-wrapper {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        .chart-container {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+
+        /* CONTENEDOR PRINCIPAL */
+        main {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
             position: relative;
-            height: 300px;
+            height: calc(100vh - 55px);
+            overflow: hidden;
         }
-        
-        .loading {
-            text-align: center;
-            font-weight: bold;
-            color: var(--primary);
-            margin-bottom: 15px;
-            padding: 10px;
-            background: #e8ecff;
-            border-radius: 5px;
+        @media (min-width: 768px) {
+            main { height: 100vh; }
         }
-        
-        .table-container {
-            background: var(--card-bg);
-            padding: 15px;
-            border-radius: 10px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-            overflow-x: auto;
-            margin-bottom: 20px;
-        }
-        table {
+
+        /* NAVEGACIÓN SUPERIOR */
+        .nav-tabs {
+            background-color: #ffffff;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            height: 60px;
             width: 100%;
-            border-collapse: collapse;
-            text-align: left;
+            z-index: 100;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.02);
         }
-        th, td {
-            padding: 10px;
-            border-bottom: 1px solid #eee;
-            font-size: 0.9em;
+        .tab-btn {
+            background: none; border: none; color: var(--text-muted); display: flex;
+            flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+            cursor: pointer; font-size: 0.8rem; font-weight: 700; flex: 1; height: 100%;
+            border-bottom: 3px solid transparent;
+            transition: all 0.2s;
         }
-        th {
-            background-color: #f1f3f5;
-            color: #444;
+        .tab-btn i { font-size: 1.15rem; }
+        .tab-btn.active { 
+            color: var(--primary); 
+            border-bottom: 3px solid var(--primary);
+            background-color: #f8fafc;
         }
-        hr.divider {
-            border: 0;
-            height: 2px;
-            background: #e2e8f0;
-            margin: 30px 0;
+
+        /* HOJAS INDEPENDIENTES */
+        .view-sheet {
+            display: none;
+            flex: 1;
+            padding: 15px 15px 100px 15px;
+            overflow-y: auto;
+            height: calc(100% - 60px);
         }
+        .view-sheet.active { display: block; }
+
+        .sheet-header {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            color: white; padding: 14px; border-radius: 10px; margin-bottom: 15px;
+        }
+        .sheet-header h2 { font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+        .sheet-header p { color: #94a3b8; font-size: 0.8rem; margin-top: 2px; }
+
+        /* VISTA DE TARJETAS DE CARPETAS */
+        .folders-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 12px;
+            margin-top: 10px;
+        }
+        .folder-card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 18px 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .folder-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+            border-color: var(--primary);
+        }
+        .folder-card i { font-size: 2.2rem; color: var(--primary); }
+        .folder-card-title { font-weight: 700; font-size: 0.95rem; color: var(--text-main); word-break: break-word; }
+        .folder-card-counter { font-size: 0.75rem; background-color: #fee2e2; color: var(--danger); padding: 3px 8px; border-radius: 20px; font-weight: 700; }
+
+        /* BOTÓN DE RETORNO */
+        .btn-back-folders {
+            background-color: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px;
+            font-weight: bold; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
+            margin-bottom: 15px; box-shadow: 0 2px 4px rgba(37, 99, 235, 0.15);
+        }
+
+        /* FORMULARIO DE REGISTRO */
+        .task-form-card { background-color: var(--bg-card); padding: 15px; border-radius: 10px; border: 1px solid var(--border); }
+        .task-form { display: flex; flex-direction: column; gap: 12px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.8rem; margin-bottom: 4px; font-weight: 700; color: #475569; }
+        .input-icon-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
+        .input-icon-wrapper i { position: absolute; left: 12px; color: var(--text-muted); }
+        .input-icon-wrapper input, .input-icon-wrapper select, .input-icon-wrapper textarea {
+            width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; background-color: #fafafa;
+        }
+        
+        /* Checkbox de WhatsApp */
+        .whatsapp-checkbox-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background-color: #f0fdf4;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #bbf7d0;
+            margin-top: 5px;
+            cursor: pointer;
+        }
+        .whatsapp-checkbox-container input {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--success);
+            cursor: pointer;
+        }
+        .whatsapp-checkbox-container label {
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #166534;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Botón de Contactos */
+        .btn-contacts {
+            background-color: var(--primary); color: white; border: none; width: 65px; height: 100%; border-radius: 0 8px 8px 0;
+            cursor: pointer; font-size: 0.85rem; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; gap: 4px;
+        }
+
+        .task-form-btn {
+            background-color: var(--primary); color: white; border: none; padding: 14px; border-radius: 8px; font-weight: bold; font-size: 0.95rem; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;
+        }
+
+        /* CONTENEDOR DE TARJETAS */
+        .tasks-container { display: flex; flex-direction: column; gap: 10px; }
+
+        /* TARJETAS COMPACTAS DESPLEGABLES */
+        .task-card {
+            background-color: var(--bg-card); border-radius: 8px; padding: 10px 14px;
+            border: 1px solid var(--border); border-left: 5px solid var(--primary);
+            cursor: pointer; transition: all 0.2s; position: relative;
+        }
+        .task-card.priority-high { border-left-color: var(--danger); }
+        .task-card.completed { border-left-color: var(--text-muted); opacity: 0.85; }
+        .task-card.deleted { border-left-color: #94a3b8; opacity: 0.8; }
+        
+        .task-summary { display: flex; justify-content: space-between; align-items: center; }
+        .task-main-info { display: flex; flex-direction: column; gap: 1px; }
+        .task-title { font-weight: 700; font-size: 1rem; color: var(--text-main); }
+        .task-time-badge { font-size: 0.75rem; color: #475569; font-weight: 600; }
+        .task-right-info { display: flex; align-items: center; gap: 8px; }
+        .task-folder-badge { font-size: 0.7rem; background-color: #e2e8f0; color: #475569; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+        .expand-icon { color: var(--text-muted); font-size: 0.8rem; transition: transform 0.2s; }
+
+        .task-details {
+            display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border);
+            animation: fadeIn 0.15s ease-in-out;
+        }
+        .task-card.expanded .task-details { display: block; }
+        .task-card.expanded .expand-icon { transform: rotate(180deg); }
+
+        .task-desc { font-size: 0.85rem; color: #475569; background-color: #f8fafc; padding: 8px; border-radius: 6px; margin-bottom: 8px; white-space: pre-line; }
+        .task-meta-row { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px; display: flex; flex-direction: column; gap: 4px; }
+        .task-meta-item { display: flex; align-items: center; gap: 6px; }
+        .task-meta-item i { color: var(--primary); width: 14px; }
+
+        .task-actions { display: flex; gap: 6px; }
+        .btn-action { flex: 1; border: none; padding: 8px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.8rem; display: flex; align-items: center; justify-content: center; gap: 5px; }
+        .btn-complete { background-color: var(--success); color: white; }
+        .btn-edit { background-color: var(--primary); color: white; }
+        .btn-reopen { background-color: var(--primary); color: white; }
+        .btn-delete { background-color: #f1f5f9; color: var(--danger); }
+
+        /* MODAL DE CIERRE */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5); z-index: 200;
+            display: none; align-items: center; justify-content: center; padding: 20px;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-card {
+            background-color: white; width: 100%; max-width: 400px; border-radius: 12px;
+            padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            animation: slideUp 0.25s ease;
+        }
+        .modal-card h3 { margin-bottom: 8px; color: var(--text-main); display: flex; align-items: center; gap: 6px; font-size: 1.1rem; }
+        .modal-card textarea { width: 100%; height: 80px; padding: 8px; border-radius: 6px; border: 1.5px solid var(--border); outline: none; margin-bottom: 12px; font-size: 0.9rem; resize: none; }
+        .modal-buttons { display: flex; flex-direction: column; gap: 8px; }
+        .btn-modal { width: 100%; padding: 10px; border: none; border-radius: 6px; font-weight: bold; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; }
+        
+        .empty-state { text-align: center; padding: 25px; color: var(--text-muted); font-size: 0.85rem; }
+        .empty-state i { font-size: 1.8rem; color: #cbd5e1; margin-bottom: 6px; display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(15px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <h2>Dashboard de Llamadas</h2>
-
-    <!-- =========================================
-         NUEVO: Botones para cambiar de vista 
-         ========================================= -->
-    <div class="tab-container">
-        <button id="btn-dashboard" class="tab-btn active" onclick="switchView('dashboard')">Ver Dashboard</button>
-        <button id="btn-exportar" class="tab-btn" onclick="switchView('exportar')">Ver Módulo de Exportación</button>
+    <div class="mobile-header">
+        <h1><i class="fa-solid fa-folder-open"></i> Planeador</h1>
+        <button class="menu-toggle-btn" onclick="toggleSidebar()">
+            <i class="fa-solid fa-bars"></i> Carpetas
+        </button>
     </div>
 
-    <!-- =========================================
-         SECCIÓN 1: DASHBOARD (Visible por defecto)
-         ========================================= -->
-    <div id="view-dashboard">
-        <div id="status" class="loading">Cargando datos seguros desde Google Sheets...</div>
+    <aside id="sidebar">
+        <h2>
+            <span><i class="fa-solid fa-folder"></i> Carpetas</span>
+            <button class="close-sidebar-btn" onclick="toggleSidebar()">×</button>
+        </h2>
+        <div class="folder-form">
+            <input type="text" id="newFolderInput" placeholder="Nueva Carpeta..." />
+            <button onclick="createFolder()"><i class="fa-solid fa-plus"></i></button>
+        </div>
+        <ul class="folder-list" id="folderList"></ul>
+        
+        <!-- Botón de Instalación en Pantalla de Inicio -->
+        <button id="installPwaBtn" class="pwa-install-btn" onclick="triggerPwaInstall()">
+            <i class="fa-solid fa-square-plus"></i> 📲 Instalar en Pantalla
+        </button>
+    </aside>
 
-        <!-- Filtros principales de fecha y usuario -->
-        <div class="controls">
-            <div class="control-group">
-                <label for="startDate">Desde:</label>
-                <input type="date" id="startDate">
+    <main>
+        <!-- NAVEGACIÓN SUPERIOR -->
+        <nav class="nav-tabs">
+            <button class="tab-btn active" id="tab-tasks" onclick="switchSheet('tasks')">
+                <i class="fa-solid fa-list-check"></i><span>Pendientes</span>
+            </button>
+            <button class="tab-btn" id="tab-new" onclick="switchSheet('new')">
+                <i class="fa-solid fa-circle-plus" style="font-size: 1.3rem; color: var(--primary);" id="newTabIcon"></i><span style="font-weight:700;" id="newTabText">Nuevo</span>
+            </button>
+            <button class="tab-btn" id="tab-history" onclick="switchSheet('history')">
+                <i class="fa-solid fa-clock-rotate-left"></i><span>Historial</span>
+            </button>
+        </nav>
+
+        <!-- HOJA 1: PENDIENTES ACTIVOS -->
+        <div id="sheet-tasks" class="view-sheet active">
+            
+            <!-- Vista General: Tarjetas de Carpetas con Pendientes -->
+            <div id="foldersOverview">
+                <div class="sheet-header">
+                    <h2><i class="fa-solid fa-folder-open"></i> Carpetas con Pendientes</h2>
+                    <p>Solo se muestran carpetas con actividades activas por realizar.</p>
+                </div>
+                <div class="folders-grid" id="foldersGridContainer">
+                    <!-- Cargado dinámicamente -->
+                </div>
             </div>
-            <div class="control-group">
-                <label for="endDate">Hasta:</label>
-                <input type="date" id="endDate">
+
+            <!-- Vista Enfocada: Pendientes de la carpeta -->
+            <div id="focusedFolderView" style="display: none;">
+                <button class="btn-back-folders" onclick="exitFolderView()">
+                    <i class="fa-solid fa-arrow-left"></i> Volver a Carpetas
+                </button>
+                <div class="sheet-header">
+                    <h2 id="mainTitle">Carpeta Seleccionada</h2>
+                    <p>Pendientes activos ordenados cronológicamente.</p>
+                </div>
+                <div class="tasks-container" id="activeTasksContainer"></div>
             </div>
-            <div class="control-group">
-                <label id="userLabel" for="userFilter">Funcionario / Asesor:</label>
-                <select id="userFilter">
-                    <option value="">Cargando funcionarios...</option>
-                </select>
+
+        </div>
+
+        <!-- HOJA 2: CREAR / MODIFICAR NUEVO PENDIENTE -->
+        <div id="sheet-new" class="view-sheet">
+            <div class="sheet-header">
+                <h2 id="formHeaderTitle"><i class="fa-solid fa-circle-plus"></i> Registrar Pendiente</h2>
+                <p id="formHeaderSub">Al guardar el pendiente, el sistema te regresará a la carpeta correspondiente.</p>
+            </div>
+            <div class="task-form-card">
+                <form class="task-form" onsubmit="saveTask(event)">
+                    <input type="hidden" id="taskId">
+                    
+                    <div class="form-group">
+                        <label>¿Qué hay que hacer?</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-clipboard-list"></i>
+                            <input type="text" id="taskName" required placeholder="Ej: Llamar a Carlos">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Asignar a Carpeta</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-folder"></i>
+                            <select id="taskFolder" required></select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Fecha Programada</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-calendar-days"></i>
+                            <input type="date" id="taskDate" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Hora Programada</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-clock"></i>
+                            <input type="time" id="taskTime" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Número de Teléfono (Opcional)</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-phone" style="z-index: 5;"></i>
+                            <input type="tel" id="taskPhone" placeholder="Ej: 320 812 3125" style="padding-right: 75px;">
+                            <button type="button" class="btn-contacts" onclick="selectDeviceContact()">
+                                <i class="fa-solid fa-address-book"></i> Ver
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Nivel de Importancia</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-triangle-exclamation"></i>
+                            <select id="taskPriority">
+                                <option value="normal">Normal</option>
+                                <option value="high">¡Alta Prioridad!</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Instrucciones u Observaciones</label>
+                        <div class="input-icon-wrapper">
+                            <i class="fa-solid fa-comment-dots" style="top: 15px;"></i>
+                            <textarea id="taskObs" style="height: 60px; padding-top: 10px;" placeholder="Escribe aquí los detalles..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- CHECKBOX PARA NOTIFICAR WHATSAPP AL GUARDAR -->
+                    <div class="whatsapp-checkbox-container" onclick="toggleWhatsAppCheckbox(event)">
+                        <input type="checkbox" id="sendWhatsAppOnCreate">
+                        <label for="sendWhatsAppOnCreate">
+                            <i class="fa-brands fa-whatsapp" style="font-size: 1.1rem; color: #166534;"></i> ¿Enviar WhatsApp al guardar?
+                        </label>
+                    </div>
+                    
+                    <button type="submit" class="task-form-btn" id="saveTaskBtn">
+                        <i class="fa-solid fa-floppy-disk"></i> Guardar Pendiente
+                    </button>
+                </form>
             </div>
         </div>
 
-        <!-- Tarjetas de resumen (KPIs) dinámicas -->
-        <div class="kpi-container" id="kpi-container"></div>
-
-        <!-- Gráficos agrupados -->
-        <div class="charts-wrapper">
-            <div class="chart-container">
-                <canvas id="chartCargo"></canvas>
+        <!-- HOJA 3: HISTORIAL -->
+        <div id="sheet-history" class="view-sheet">
+            <div class="sheet-header">
+                <h2><i class="fa-solid fa-clock-rotate-left"></i> Historial y Papelera</h2>
+                <p>Lista de tareas completadas y pendientes eliminados para recuperar.</p>
             </div>
-            <div class="chart-container">
-                <canvas id="chartLista"></canvas>
-            </div>
-            <!-- Nuevo Gráfico -->
-            <div class="chart-container">
-                <canvas id="chartInteresadosCargo"></canvas>
-            </div>
+            <div class="tasks-container" id="completedTasksContainer"></div>
         </div>
-    </div>
+    </main>
 
-    <!-- =========================================
-         SECCIÓN 2: EXPORTACIÓN (Oculta por defecto)
-         ========================================= -->
-    <div id="view-exportar" class="hidden-view">
-        <hr class="divider">
-        <h2>Módulo de Exportación de Datos</h2>
-
-        <!-- Controles de la Tabla Exportable -->
-        <div class="controls">
-            <div class="control-group">
-                <label for="listaFilter">Filtrar tabla por Estado de Lista:</label>
-                <select id="listaFilter">
-                    <option value="TODOS">Todos los estados</option>
-                </select>
+    <!-- MODAL DE CIERRE -->
+    <div class="modal-overlay" id="closeModal">
+        <div class="modal-card">
+            <h3><i class="fa-solid fa-comment-check" style="color:var(--success);"></i> Conclusión del Pendiente</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 10px;">Escribe qué se resolvió o cuál fue el resultado:</p>
+            <textarea id="modalConclusion" placeholder="Ej: Confirmaron la cita para el lunes a las 9..."></textarea>
+            
+            <div class="modal-buttons">
+                <button class="btn-modal" style="background-color: var(--success); color: white;" onclick="confirmCloseTask(true)">
+                    <i class="fa-brands fa-whatsapp"></i> Guardar y Enviar WhatsApp
+                </button>
+                <button class="btn-modal" style="background-color: var(--primary); color: white;" onclick="confirmCloseTask(false)">
+                    <i class="fa-solid fa-box-archive"></i> Solo Guardar en Historial
+                </button>
+                <button class="btn-modal" style="background-color: #e2e8f0; color: var(--text-main);" onclick="closeModalWindow()">
+                    Cancelar
+                </button>
             </div>
-            <div class="control-group" style="flex: 0 1 auto;">
-                <button id="btnExport" class="btn-export">Exportar a CSV 📥</button>
-            </div>
-        </div>
-
-        <!-- Tabla de visualización de datos filtrados -->
-        <div class="table-container">
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>Cédula</th>
-                        <th>Nombre</th>
-                        <th>Cargo</th>
-                        <th>Celular</th>
-                        <th>Estado Lista</th>
-                    </tr>
-                </thead>
-                <tbody id="dataTableBody">
-                    <!-- Los datos se inyectarán aquí -->
-                </tbody>
-            </table>
         </div>
     </div>
 
     <script>
-        // =========================================
-        // NUEVA FUNCIÓN: Cambiar entre Dashboard y Exportación
-        // =========================================
-        function switchView(view) {
-            if (view === 'dashboard') {
-                document.getElementById('view-dashboard').classList.remove('hidden-view');
-                document.getElementById('view-exportar').classList.add('hidden-view');
-                document.getElementById('btn-dashboard').classList.add('active');
-                document.getElementById('btn-exportar').classList.remove('active');
-            } else {
-                document.getElementById('view-dashboard').classList.add('hidden-view');
-                document.getElementById('view-exportar').classList.remove('hidden-view');
-                document.getElementById('btn-dashboard').classList.remove('active');
-                document.getElementById('btn-exportar').classList.add('active');
-            }
-        }
+        // --- RECURSOS SVG DEL ESCUDO EN ALTA RESOLUCIÓN ---
+        const shieldSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><path d='M256 0c15 0 29.3 6.9 38.6 18.6L465.1 231c7.3 9.1 10.9 20.6 10.9 32V416c0 53-43 96-96 96H132c-53 0-96-43-96-96V263c0-11.4 3.6-22.9 10.9-32L217.4 18.6c9.3-11.7 23.6-18.6 38.6-18.6z' fill='%2310b981'/><path d='M256 0V512c53 0 96-43 96-96V263c0-11.4-3.6-22.9-10.9-32L256 0z' fill='%232563eb'/></svg>`;
+        const svgDataUri = "data:image/svg+xml;utf8," + encodeURIComponent(shieldSvg);
 
-        // =========================================
-        // TU CÓDIGO ORIGINAL INTACTO DESDE AQUÍ
-        // =========================================
-        
-        // ID de tu hoja de cálculo de Google
-        const sheetID = '1VUkxrVjr2P2_XZYGGnSk08SHGw4gvxQlRURVsEYryZI';
-        
-        let rawData = [];
-        let currentFilteredData = [];
-        let chartCargoInstance = null;
-        let chartListaInstance = null;
-        let chartInteresadosInstance = null; // Instancia para el nuevo gráfico
-        let userColumnKey = null;
-
-        window.onload = () => {
-            fetchData();
-            
-            document.getElementById('startDate').addEventListener('change', filterAndUpdate);
-            document.getElementById('endDate').addEventListener('change', filterAndUpdate);
-            document.getElementById('userFilter').addEventListener('change', filterAndUpdate);
-            
-            document.getElementById('listaFilter').addEventListener('change', actualizarTabla);
-            document.getElementById('btnExport').addEventListener('click', exportarCSV);
-        };
-
-        function fetchData() {
-            const jsonpURL = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=responseHandler:handleData`;
-            const script = document.createElement('script');
-            script.src = jsonpURL;
-            script.onerror = function() {
-                document.getElementById('status').innerText = 'Error de conexión. Asegúrate de estar conectado a internet.';
-                document.getElementById('status').style.color = 'red';
-            };
-            document.head.appendChild(script);
-        }
-
-        window.handleData = function(response) {
-            try {
-                if (!response || !response.table) {
-                    document.getElementById('status').innerText = 'Error: Estructura de tabla no reconocida.';
-                    document.getElementById('status').style.color = 'red';
-                    return;
+        // --- SISTEMA DINÁMICO DE MANIFIESTO WEB (AÑADIR A LA PANTALLA) ---
+        const manifest = {
+            "short_name": "Planeador",
+            "name": "Planeador de Pendientes Profesional",
+            "icons": [
+                {
+                    "src": svgDataUri,
+                    "type": "image/svg+xml",
+                    "sizes": "512x512",
+                    "purpose": "any maskable"
                 }
+            ],
+            "start_url": window.location.href,
+            "background_color": "#0f172a",
+            "theme_color": "#0f172a",
+            "display": "standalone",
+            "orientation": "portrait"
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+        const manifestURL = URL.createObjectURL(manifestBlob);
+        
+        const manifestLink = document.createElement('link');
+        manifestLink.rel = 'manifest';
+        manifestLink.href = manifestURL;
+        document.head.appendChild(manifestLink);
 
-                const cols = response.table.cols.map(col => col ? (col.label || '').trim() : '');
-                const rows = response.table.rows;
+        // Variables de datos
+        let folders = JSON.parse(localStorage.getItem('planner_folders')) || ['Maira', 'Carlos', 'Javier', 'Maria Fernanda', 'Marcela'];
+        let tasks = JSON.parse(localStorage.getItem('planner_tasks')) || [];
+        let selectedFolder = null;
+        let currentClosingTaskId = null;
+        let deferredPrompt = null;
 
-                rawData = rows.map(row => {
-                    let rowDataObj = {};
-                    if (row && row.c) {
-                        row.c.forEach((cell, index) => {
-                            const colName = cols[index];
-                            if (colName) {
-                                let val = '';
-                                if (cell) {
-                                    val = cell.f !== undefined && cell.f !== null ? cell.f : (cell.v !== undefined && cell.v !== null ? cell.v : '');
-                                }
-                                rowDataObj[colName] = String(val).trim();
-                            }
-                        });
+        document.addEventListener('DOMContentLoaded', () => {
+            // Cargar iconos de escudo dinámicamente
+            document.getElementById('favicon').href = svgDataUri;
+            document.getElementById('apple-icon').href = svgDataUri;
+
+            renderFolders();
+            renderTasks();
+            updateFolderSelectOptions();
+            setDefaultDateTime();
+            
+            // Primera comprobación instantánea al abrir la app
+            checkOverdueTasks();
+
+            // --- SISTEMA AUTOMÁTICO DE REFRESCO (CADA 60 MINUTOS) ---
+            setInterval(() => {
+                console.log("Comprobación automática de pendientes vencidos (Ejecutada cada 60 minutos)");
+                checkOverdueTasks();
+            }, 60 * 60 * 1000); // 60 minutos expresados en milisegundos
+        });
+
+        // --- CAPTURA DE LA INSTALACIÓN EN PANTALLA ---
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            // Mostrar el botón en la barra lateral
+            const installBtn = document.getElementById('installPwaBtn');
+            if(installBtn) installBtn.style.display = 'flex';
+        });
+
+        function triggerPwaInstall() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('Usuario aceptó instalar la App en pantalla.');
                     }
-                    return rowDataObj;
-                });
-
-                rawData = rawData.filter(row => row['Hora de llamada'] && row['Hora de llamada'] !== '');
-
-                if (rawData.length === 0) {
-                    document.getElementById('status').innerText = 'Error: No se encontraron datos válidos.';
-                    document.getElementById('status').style.color = 'red';
-                    return;
-                }
-
-                document.getElementById('status').style.display = 'none';
-                
-                configurarFiltroUsuario();
-                configurarFiltroLista(); 
-                establecerFechasPorDefecto();
-                filterAndUpdate();
-
-            } catch (error) {
-                console.error(error);
-                document.getElementById('status').innerText = 'Ocurrió un error procesando los datos: ' + error.message;
-                document.getElementById('status').style.color = 'red';
-            }
-        };
-
-        function configurarFiltroUsuario() {
-            const userFilterSelect = document.getElementById('userFilter');
-            userFilterSelect.innerHTML = '<option value="">Todos los funcionarios</option>';
-            if (rawData.length === 0) return;
-
-            const keys = Object.keys(rawData[0]);
-            const keywords = ['asesor', 'usuario', 'funcionario', 'agente', 'operador', 'responsable', 'registrado', 'creado', 'quien'];
-            
-            userColumnKey = keys.find(key => {
-                const lowerKey = key.toLowerCase();
-                return keywords.some(keyword => lowerKey.includes(keyword));
-            });
-
-            if (!userColumnKey) {
-                userColumnKey = keys.find(key => key.toLowerCase().includes('nombre completo'));
-            }
-
-            if (userColumnKey) {
-                document.getElementById('userLabel').innerText = `Filtrar por ${userColumnKey}:`;
-                const usuariosUnicos = [...new Set(rawData.map(row => (row[userColumnKey] || '').trim()))]
-                    .filter(val => val !== '').sort();
-
-                usuariosUnicos.forEach(usuario => {
-                    const option = document.createElement('option');
-                    option.value = usuario;
-                    option.text = usuario;
-                    userFilterSelect.appendChild(option);
+                    deferredPrompt = null;
+                    document.getElementById('installPwaBtn').style.display = 'none';
                 });
             } else {
-                document.getElementById('userLabel').innerText = 'Funcionario / Asesor:';
-                userFilterSelect.innerHTML += '<option disabled>(No se halló columna)</option>';
+                // Mensaje instructivo alternativo en caso de que el navegador no dé soporte directo o ya esté instalada
+                alert("💡 ¿Cómo añadirlo manualmente en tu celular?\n\n" +
+                      "1. Abre el menú de opciones del navegador (los 3 puntos arriba a la derecha o el botón de compartir en Safari).\n" +
+                      "2. Presiona 'Añadir a la pantalla de inicio' o 'Instalar aplicación'.\n" +
+                      "3. ¡Listo! Se creará el acceso directo con tu escudo de inmediato.");
             }
         }
 
-        function configurarFiltroLista() {
-            const listaFilterSelect = document.getElementById('listaFilter');
-            listaFilterSelect.innerHTML = '<option value="TODOS">Todos los estados</option>';
+        function setDefaultDateTime() {
+            document.getElementById('taskDate').value = new Date().toISOString().split('T')[0];
+            document.getElementById('taskTime').value = "08:00";
+        }
+
+        function switchSheet(sheetId) {
+            document.querySelectorAll('.view-sheet').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(`sheet-${sheetId}`).classList.add('active');
+            document.getElementById(`tab-${sheetId}`).classList.add('active');
             
-            const estadosUnicos = [...new Set(rawData.map(row => (row['LISTA'] || 'Sin clasificar').trim()))]
-                    .filter(val => val !== '').sort();
-
-            estadosUnicos.forEach(estado => {
-                const option = document.createElement('option');
-                option.value = estado;
-                option.text = estado;
-                listaFilterSelect.appendChild(option);
-            });
-        }
-
-        function parseSheetDate(dateString) {
-            if(!dateString) return null;
-            let datePart = dateString.split(',')[0].trim(); 
-            let parts = datePart.split('/');
-            if(parts.length === 3) {
-                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            if (sheetId !== 'new') {
+                resetFormToCreate();
             }
-            return null;
-        }
 
-        function establecerFechasPorDefecto() {
-            let fechasValidas = rawData.map(r => parseSheetDate(r['Hora de llamada'])).filter(d => d).sort();
-            if(fechasValidas.length > 0) {
-                document.getElementById('startDate').value = fechasValidas[0]; 
-                document.getElementById('endDate').value = fechasValidas[fechasValidas.length - 1]; 
+            if (sheetId === 'tasks' && selectedFolder === null) {
+                exitFolderView();
             }
         }
 
-        function filterAndUpdate() {
-            const start = document.getElementById('startDate').value;
-            const end = document.getElementById('endDate').value;
-            const selectedUser = document.getElementById('userFilter').value;
-
-            currentFilteredData = rawData.filter(row => {
-                let rowDate = parseSheetDate(row['Hora de llamada']);
-                if(!rowDate) return false;
-                
-                let inRange = true;
-                if(start && rowDate < start) inRange = false;
-                if(end && rowDate > end) inRange = false;
-                
-                if(inRange && selectedUser && userColumnKey) {
-                    let rowUser = (row[userColumnKey] || '').trim();
-                    if(rowUser !== selectedUser) inRange = false;
-                }
-                return inRange;
-            });
-
-            actualizarKPIs(currentFilteredData);
-            actualizarGraficos(currentFilteredData);
-            actualizarTabla(); 
+        function toggleSidebar() { document.getElementById('sidebar').classList.toggle('open'); }
+        function saveData() {
+            localStorage.setItem('planner_folders', JSON.stringify(folders));
+            localStorage.setItem('planner_tasks', JSON.stringify(tasks));
         }
 
-        function actualizarKPIs(data) {
-            const kpiContainer = document.getElementById('kpi-container');
-            const cargosCount = {};
-            
-            data.forEach(row => {
-                let cargo = (row['Cargo'] || 'Desconocido').trim().toLowerCase();
-                if (cargo !== '') {
-                    cargosCount[cargo] = (cargosCount[cargo] || 0) + 1;
+        // --- ALERTA DE PENDIENTES VENCIDOS ---
+        function checkOverdueTasks() {
+            const now = new Date();
+            const overdue = [];
+
+            tasks.forEach(task => {
+                if (!task.completed && !task.deleted) {
+                    const taskDateTime = new Date(`${task.date}T${task.time}`);
+                    if (taskDateTime < now) {
+                        overdue.push(`• ${task.name} (${task.date} a las ${task.time})`);
+                    }
                 }
             });
 
-            let htmlCards = `
-                <div class="kpi-card">
-                    <div class="kpi-value">${data.length}</div>
-                    <div class="kpi-label">Total Llamadas</div>
-                </div>
-            `;
+            if (overdue.length > 0) {
+                alert(`⚠️ ¡ATENCIÓN! Tienes pendientes vencidos sin resolver:\n\n${overdue.join('\n')}\n\nPor favor, revísalos con prioridad.`);
+            }
+        }
 
-            Object.keys(cargosCount).forEach(cargo => {
-                htmlCards += `
-                    <div class="kpi-card">
-                        <div class="kpi-value">${cargosCount[cargo]}</div>
-                        <div class="kpi-label">${cargo}</div>
+        function toggleWhatsAppCheckbox(event) {
+            if (event.target.id !== 'sendWhatsAppOnCreate') {
+                const cb = document.getElementById('sendWhatsAppOnCreate');
+                cb.checked = !cb.checked;
+            }
+        }
+
+        // --- SELECCIONAR CONTACTOS DEL DISPOSITIVO ---
+        async function selectDeviceContact() {
+            const props = ['name', 'tel'];
+            const opts = { multiple: false };
+
+            if ('contacts' in navigator && 'select' in navigator.contacts) {
+                try {
+                    const contact = await navigator.contacts.select(props, opts);
+                    if (contact && contact.length > 0) {
+                        const selected = contact[0];
+                        if (selected.name && selected.name.length > 0) {
+                            document.getElementById('taskName').value = `Llamar a ${selected.name[0]}`;
+                        }
+                        if (selected.tel && selected.tel.length > 0) {
+                            const phoneClean = selected.tel[0].replace(/[^0-9]/g, '');
+                            document.getElementById('taskPhone').value = phoneClean;
+                        }
+                    }
+                } catch (err) {
+                    alert('Se canceló la selección o no se concedieron permisos de contactos.');
+                }
+            } else {
+                alert('⚠️ NOTA: El selector de contactos requiere HTTPS. Escribe el número a mano si abres el archivo localmente.');
+            }
+        }
+
+        // --- GESTIÓN DE CARPETAS ---
+        function renderFolders() {
+            const list = document.getElementById('folderList');
+            list.innerHTML = `<li class="folder-item ${selectedFolder === null ? 'active' : ''}" onclick="selectFolder(null)"><div class="folder-name-container"><i class="fa-solid fa-folder-open"></i> <span>Ver Todo</span></div></li>`;
+            
+            folders.forEach(f => {
+                list.innerHTML += `<li class="folder-item ${selectedFolder === f ? 'active' : ''}" onclick="selectFolder('${f}')"><div class="folder-name-container"><i class="fa-solid fa-folder"></i> <span>${f}</span></div><button class="delete-folder-btn" onclick="deleteFolder(event, '${f}')"><i class="fa-solid fa-trash-can"></i></button></li>`;
+            });
+
+            const gridContainer = document.getElementById('foldersGridContainer');
+            gridContainer.innerHTML = '';
+
+            let foldersDisplayed = 0;
+
+            folders.forEach(folder => {
+                const activeCount = tasks.filter(t => t.folder === folder && !t.completed && !t.deleted).length;
+
+                if (activeCount > 0) {
+                    foldersDisplayed++;
+                    gridContainer.innerHTML += `
+                        <div class="folder-card" onclick="selectFolder('${folder}')">
+                            <i class="fa-solid fa-folder"></i>
+                            <span class="folder-card-title">${folder}</span>
+                            <span class="folder-card-counter">${activeCount} ${activeCount === 1 ? 'Pendiente' : 'Pendientes'}</span>
+                        </div>
+                    `;
+                }
+            });
+
+            if (foldersDisplayed === 0) {
+                gridContainer.innerHTML = `
+                    <div class="empty-state" style="grid-column: 1/-1;">
+                        <i class="fa-solid fa-circle-check" style="color: var(--success); font-size: 3rem;"></i>
+                        <p style="margin-top: 10px; font-weight: bold;">¡Excelente Carlos! No tienes ninguna carpeta con pendientes activos.</p>
+                    </div>`;
+            }
+        }
+
+        function createFolder() {
+            const input = document.getElementById('newFolderInput');
+            const name = input.value.trim();
+            if (name && !folders.includes(name)) { 
+                folders.push(name); 
+                input.value = ''; 
+                saveData(); 
+                renderFolders(); 
+                updateFolderSelectOptions(); 
+            }
+        }
+
+        function deleteFolder(event, name) {
+            event.stopPropagation();
+            if(confirm(`¿Eliminar carpeta "${name}"?`)) { 
+                folders = folders.filter(f => f !== name); 
+                if(selectedFolder === name) selectedFolder = null; 
+                saveData(); 
+                renderFolders(); 
+                updateFolderSelectOptions(); 
+                renderTasks(); 
+            }
+        }
+
+        function selectFolder(folder) {
+            selectedFolder = folder;
+            renderFolders();
+            
+            if (folder === null) {
+                exitFolderView();
+            } else {
+                document.getElementById('mainTitle').innerText = `Carpeta: ${folder}`;
+                document.getElementById('foldersOverview').style.display = 'none';
+                document.getElementById('focusedFolderView').style.display = 'block';
+                renderTasks();
+            }
+
+            if(window.innerWidth < 768) {
+                const sidebar = document.getElementById('sidebar');
+                if (sidebar.classList.contains('open')) toggleSidebar();
+            }
+            switchSheet('tasks');
+        }
+
+        function exitFolderView() {
+            selectedFolder = null;
+            document.getElementById('foldersOverview').style.display = 'block';
+            document.getElementById('focusedFolderView').style.display = 'none';
+            renderFolders();
+        }
+
+        function updateFolderSelectOptions() {
+            const select = document.getElementById('taskFolder');
+            select.innerHTML = '<option value="" disabled selected>Selecciona una carpeta...</option>';
+            folders.forEach(f => { select.innerHTML += `<option value="${f}">${f}</option>`; });
+        }
+
+        // --- MODO MODIFICACIÓN ---
+        function startEditTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                document.getElementById('taskId').value = task.id;
+                document.getElementById('taskName').value = task.name;
+                document.getElementById('taskFolder').value = task.folder;
+                document.getElementById('taskDate').value = task.date;
+                document.getElementById('taskTime').value = task.time;
+                document.getElementById('taskPhone').value = task.phone;
+                document.getElementById('taskPriority').value = task.priority;
+                document.getElementById('taskObs').value = task.observation;
+                document.getElementById('sendWhatsAppOnCreate').checked = false;
+
+                document.getElementById('formHeaderTitle').innerHTML = `<i class="fa-solid fa-pen-to-square"></i> Modificar Pendiente`;
+                document.getElementById('formHeaderSub').innerText = `Actualiza los datos del pendiente seleccionado.`;
+                document.getElementById('saveTaskBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Cambios`;
+                
+                document.getElementById('newTabText').innerText = 'Editar';
+                document.getElementById('newTabIcon').className = 'fa-solid fa-pen-to-square';
+
+                switchSheet('new');
+            }
+        }
+
+        function resetFormToCreate() {
+            document.getElementById('taskId').value = '';
+            document.getElementById('formHeaderTitle').innerHTML = `<i class="fa-solid fa-circle-plus"></i> Registrar Pendiente`;
+            document.getElementById('formHeaderSub').innerText = `Al guardar el pendiente, el sistema te regresará a la carpeta correspondiente.`;
+            document.getElementById('saveTaskBtn').innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Guardar Pendiente`;
+            
+            document.getElementById('newTabText').innerText = 'Nuevo';
+            document.getElementById('newTabIcon').className = 'fa-solid fa-circle-plus';
+        }
+
+        // --- GESTIÓN DE TAREAS ---
+        function saveTask(event) {
+            event.preventDefault();
+            
+            const id = document.getElementById('taskId').value;
+            const task = {
+                id: id || Date.now().toString(),
+                name: document.getElementById('taskName').value,
+                folder: document.getElementById('taskFolder').value,
+                date: document.getElementById('taskDate').value,
+                time: document.getElementById('taskTime').value,
+                phone: document.getElementById('taskPhone').value,
+                priority: document.getElementById('taskPriority').value,
+                observation: document.getElementById('taskObs').value,
+                conclusion: '',
+                completed: false,
+                deleted: false
+            };
+
+            if (id) {
+                const index = tasks.findIndex(t => t.id === id);
+                if (index > -1) {
+                    tasks[index] = task;
+                }
+            } else {
+                tasks.push(task);
+            }
+
+            saveData(); 
+            renderFolders(); 
+            renderTasks(); 
+
+            const shouldSendWhatsApp = document.getElementById('sendWhatsAppOnCreate').checked;
+            if (shouldSendWhatsApp) {
+                const mensaje = `*¡Pendiente Guardado!* 📋\n\n` +
+                                `• *Actividad:* ${task.name}\n` +
+                                `• *Fecha:* ${task.date} - ${task.time}\n` +
+                                `• *Detalles:* ${task.observation || 'Sin observaciones.'}`;
+                
+                const urlText = encodeURIComponent(mensaje);
+                let whatsappUrl = `https://wa.me/?text=${urlText}`;
+                
+                if (task.phone) {
+                    let cleanPhone = task.phone.replace(/[^0-9]/g, '');
+                    if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+                        cleanPhone = '57' + cleanPhone;
+                    }
+                    whatsappUrl = `https://wa.me/${cleanPhone}?text=${urlText}`;
+                }
+                window.open(whatsappUrl, '_blank');
+            }
+
+            event.target.reset(); 
+            setDefaultDateTime(); 
+            resetFormToCreate();
+            selectFolder(task.folder); 
+        }
+
+        function toggleExpand(card) { card.classList.toggle('expanded'); }
+
+        function renderTasks() {
+            const activeContainer = document.getElementById('activeTasksContainer');
+            const completedContainer = document.getElementById('completedTasksContainer');
+            activeContainer.innerHTML = ''; completedContainer.innerHTML = '';
+
+            let filtered = selectedFolder 
+                ? tasks.filter(t => t.folder === selectedFolder && !t.completed && !t.deleted) 
+                : tasks.filter(t => !t.completed && !t.deleted);
+
+            filtered.sort((a, b) => {
+                if (a.priority === 'high' && b.priority !== 'high') return -1;
+                if (a.priority !== 'high' && b.priority === 'high') return 1;
+                return new Date(`${a.date}T${a.time}`) - new Date(`${b.date}T${b.time}`);
+            });
+
+            filtered.forEach(task => {
+                const card = document.createElement('div');
+                card.className = `task-card ${task.priority === 'high' ? 'priority-high' : ''}`;
+                card.setAttribute('onclick', 'toggleExpand(this)');
+
+                card.innerHTML = `
+                    <div class="task-summary">
+                        <div class="task-main-info">
+                            <span class="task-title">${task.name}</span>
+                            <span class="task-time-badge"><i class="fa-regular fa-clock"></i> ${task.date} - ${task.time}</span>
+                        </div>
+                        <div class="task-right-info">
+                            <span class="task-folder-badge">${task.folder}</span>
+                            <i class="fa-solid fa-chevron-down expand-icon"></i>
+                        </div>
+                    </div>
+                    <div class="task-details" onclick="event.stopPropagation()">
+                        ${task.observation ? `<div class="task-desc">${task.observation}</div>` : ''}
+                        <div class="task-meta-row">
+                            ${task.phone ? `<div class="task-meta-item"><i class="fa-solid fa-phone"></i> <span><strong>Tel:</strong> ${task.phone}</span></div>` : ''}
+                            <div class="task-meta-item"><i class="fa-solid fa-triangle-exclamation"></i> <span><strong>Prioridad:</strong> ${task.priority === 'high' ? 'Alta' : 'Normal'}</span></div>
+                        </div>
+                        <div class="task-actions">
+                            <button class="btn-action btn-complete" onclick="openCloseModal('${task.id}')"><i class="fa-solid fa-check"></i> Cerrar</button>
+                            <button class="btn-action btn-edit" onclick="startEditTask('${task.id}')"><i class="fa-solid fa-pen-to-square"></i> Editar</button>
+                            <button class="btn-action btn-delete" onclick="recycleTask('${task.id}')"><i class="fa-solid fa-trash"></i></button>
+                        </div>
                     </div>
                 `;
+                activeContainer.appendChild(card);
             });
 
-            kpiContainer.innerHTML = htmlCards;
+            // HISTORIAL
+            let historyTasks = tasks.filter(t => t.completed || t.deleted);
+            historyTasks.forEach(task => {
+                const card = document.createElement('div');
+                card.className = `task-card ${task.completed ? 'completed' : 'deleted'}`;
+                card.setAttribute('onclick', 'toggleExpand(this)');
+
+                if (task.completed) {
+                    card.innerHTML = `
+                        <div class="task-summary">
+                            <div class="task-main-info">
+                                <span class="task-title" style="text-decoration: line-through;">${task.name}</span>
+                                <span class="task-time-badge" style="color:var(--success);"><i class="fa-solid fa-circle-check"></i> Resuelto</span>
+                            </div>
+                            <div class="task-right-info">
+                                <span class="task-folder-badge">${task.folder}</span>
+                                <i class="fa-solid fa-chevron-down expand-icon"></i>
+                            </div>
+                        </div>
+                        <div class="task-details" onclick="event.stopPropagation()">
+                            <div class="task-desc" style="border-left-color: var(--success); background-color: #f0fdf4;">
+                                <strong>💡 Conclusión / Resultado:</strong><br>${task.conclusion || 'Sin anotaciones.'}
+                            </div>
+                            <div class="task-meta-row">
+                                <div class="task-meta-item"><i class="fa-solid fa-calendar"></i> <span><strong>Fecha original:</strong> ${task.date} - ${task.time}</span></div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn-action btn-reopen" onclick="reopenTask('${task.id}')"><i class="fa-solid fa-rotate-left"></i> Reabrir</button>
+                                <button class="btn-action btn-delete" onclick="deletePermanently('${task.id}')"><i class="fa-solid fa-trash"></i> Eliminar</button>
+                            </div>
+                        </div>
+                    `;
+                } else if (task.deleted) {
+                    card.innerHTML = `
+                        <div class="task-summary">
+                            <div class="task-main-info">
+                                <span class="task-title" style="color: var(--text-muted); text-decoration: line-through;">${task.name}</span>
+                                <span class="task-time-badge" style="color:var(--danger);"><i class="fa-solid fa-trash-can"></i> 🗑️ Eliminado</span>
+                            </div>
+                            <div class="task-right-info">
+                                <span class="task-folder-badge">${task.folder}</span>
+                                <i class="fa-solid fa-chevron-down expand-icon"></i>
+                            </div>
+                        </div>
+                        <div class="task-details" onclick="event.stopPropagation()">
+                            ${task.observation ? `<div class="task-desc">${task.observation}</div>` : ''}
+                            <div class="task-meta-row">
+                                <div class="task-meta-item"><i class="fa-solid fa-calendar"></i> <span><strong>Fecha original:</strong> ${task.date} - ${task.time}</span></div>
+                            </div>
+                            <div class="task-actions">
+                                <button class="btn-action btn-reopen" style="background-color: var(--warning); color: white;" onclick="recoverTask('${task.id}')">
+                                    <i class="fa-solid fa-trash-arrow-up"></i> Reactivar Pendiente
+                                </button>
+                                <button class="btn-action btn-delete" onclick="deletePermanently('${task.id}')"><i class="fa-solid fa-trash"></i> Eliminar Definitivo</button>
+                            </div>
+                        </div>
+                    `;
+                }
+                completedContainer.appendChild(card);
+            });
+
+            if(activeContainer.children.length === 0) activeContainer.innerHTML = '<div class="empty-state"><i class="fa-solid fa-circle-check"></i>No hay pendientes activos en esta carpeta.</div>';
+            if(completedContainer.children.length === 0) completedContainer.innerHTML = '<div class="empty-state"><i class="fa-regular fa-folder-open"></i>Historial y papelera vacíos.</div>';
         }
 
-        function actualizarGraficos(data) {
-            const cargosCount = {};
-            const listaCount = {};
-            const interesadosCargoCount = {}; // Nuevo contador
-
-            data.forEach(row => {
-                let cargo = (row['Cargo'] || 'Desconocido').trim();
-                let lista = (row['LISTA'] || 'Sin clasificar').trim();
-
-                cargosCount[cargo] = (cargosCount[cargo] || 0) + 1;
-                listaCount[lista] = (listaCount[lista] || 0) + 1;
+        function recycleTask(id) {
+            event.stopPropagation();
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.deleted = true; 
+                saveData();
+                renderFolders();
+                renderTasks();
                 
-                // Lógica para el nuevo gráfico (Filtramos solo los 'INTERESADOS')
-                if(lista.toUpperCase() === 'INTERESADO') {
-                    interesadosCargoCount[cargo] = (interesadosCargoCount[cargo] || 0) + 1;
+                const remainingInFolder = tasks.filter(t => t.folder === task.folder && !t.completed && !t.deleted).length;
+                if (remainingInFolder === 0) {
+                    exitFolderView();
                 }
-            });
-
-            renderChartCargo(Object.keys(cargosCount), Object.values(cargosCount));
-            renderChartLista(Object.keys(listaCount), Object.values(listaCount));
-            renderChartInteresados(Object.keys(interesadosCargoCount), Object.values(interesadosCargoCount)); // Renderizamos nuevo gráfico
+            }
         }
 
-        function actualizarTabla() {
-            const tbody = document.getElementById('dataTableBody');
-            tbody.innerHTML = '';
-            
-            const estadoFiltro = document.getElementById('listaFilter').value;
-            
-            const tableData = currentFilteredData.filter(row => {
-                if(estadoFiltro === 'TODOS') return true;
-                let estadoFila = (row['LISTA'] || 'Sin clasificar').trim();
-                return estadoFila === estadoFiltro;
-            });
-
-            if (tableData.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay registros para este filtro</td></tr>';
-                return;
-            }
-
-            tableData.forEach(row => {
-                const tr = document.createElement('tr');
+        function recoverTask(id) {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                task.deleted = false; 
+                saveData();
+                renderFolders();
+                renderTasks();
                 
-                let doc = row['Documento'] || '';
-                let nombre = row['Nombre Completo'] || '';
-                let cargo = row['Cargo'] || '';
-                let celular = row['Telefono'] || '';
-                let lista = row['LISTA'] || 'Sin clasificar';
-
-                tr.innerHTML = `
-                    <td>${doc}</td>
-                    <td>${nombre}</td>
-                    <td>${cargo}</td>
-                    <td>${celular}</td>
-                    <td>${lista}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        function exportarCSV() {
-            let csv = [];
-            let rows = document.querySelectorAll("#dataTable tr");
-            
-            for (let i = 0; i < rows.length; i++) {
-                let row = [], cols = rows[i].querySelectorAll("td, th");
-                for (let j = 0; j < cols.length; j++) {
-                    let data = cols[j].innerText.replace(/"/g, '""');
-                    row.push('"' + data + '"');
-                }
-                csv.push(row.join(","));
+                alert(`¡Listo! El pendiente "${task.name}" ha sido recuperado con éxito.`);
+                selectFolder(task.folder);
             }
-
-            let csvFile = new Blob(["\ufeff" + csv.join("\n")], {type: "text/csv;charset=utf-8;"});
-            let downloadLink = document.createElement("a");
-            downloadLink.download = "Listado_Filtrado_Dashboard.csv";
-            downloadLink.href = window.URL.createObjectURL(csvFile);
-            downloadLink.style.display = "none";
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
         }
 
-        function renderChartCargo(labels, data) {
-            const ctx = document.getElementById('chartCargo').getContext('2d');
-            if(chartCargoInstance) chartCargoInstance.destroy(); 
-            chartCargoInstance = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Llamadas por Cargo',
-                        data: data,
-                        backgroundColor: ['#4361ee', '#3f37c9', '#4895ef'],
-                        borderRadius: 5
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false }, title: { display: true, text: 'Distribución por Cargo' } }
+        function reopenTask(id) {
+            const originalTask = tasks.find(t => t.id === id);
+            if (originalTask) {
+                const clonedTask = {
+                    ...originalTask,
+                    id: Date.now().toString(),
+                    completed: false,
+                    deleted: false,
+                    conclusion: ''
+                };
+                
+                tasks.push(clonedTask);
+                saveData();
+                renderFolders();
+                renderTasks();
+                
+                alert(`Se ha reabierto el pendiente. Se guardó una copia activa en la carpeta "${clonedTask.folder}".`);
+                selectFolder(clonedTask.folder); 
+            }
+        }
+
+        /* LÓGICA MODAL */
+        function openCloseModal(id) {
+            event.stopPropagation();
+            currentClosingTaskId = id;
+            document.getElementById('modalConclusion').value = '';
+            document.getElementById('closeModal').classList.add('active');
+        }
+
+        function closeModalWindow() {
+            document.getElementById('closeModal').classList.remove('active');
+            currentClosingTaskId = null;
+        }
+
+        function confirmCloseTask(sendWhatsApp) {
+            const conclusionText = document.getElementById('modalConclusion').value.trim();
+            const task = tasks.find(t => t.id === currentClosingTaskId);
+
+            if (task) {
+                task.completed = true;
+                task.conclusion = conclusionText || 'Pendiente cerrado con éxito.';
+                saveData();
+                renderFolders();
+                renderTasks();
+
+                if (sendWhatsApp) {
+                    const mensaje = `*¡Pendiente Resuelto!* ✅\n\n` +
+                                    `• *Actividad:* ${task.name}\n` +
+                                    `• *Resultado:* ${task.conclusion}`;
+                    
+                    const urlText = encodeURIComponent(mensaje);
+                    let whatsappUrl = `https://wa.me/?text=${urlText}`;
+                    
+                    if(task.phone) {
+                        let cleanPhone = task.phone.replace(/[^0-9]/g, '');
+                        if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+                            cleanPhone = '57' + cleanPhone;
+                        }
+                        whatsappUrl = `https://wa.me/${cleanPhone}?text=${urlText}`;
+                    }
+                    window.open(whatsappUrl, '_blank');
                 }
-            });
+                
+                const remainingInFolder = tasks.filter(t => t.folder === task.folder && !t.completed && !t.deleted).length;
+                if (remainingInFolder === 0) {
+                    exitFolderView();
+                }
+            }
+            closeModalWindow();
         }
 
-        function renderChartLista(labels, data) {
-            const ctx = document.getElementById('chartLista').getContext('2d');
-            if(chartListaInstance) chartListaInstance.destroy();
-            chartListaInstance = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#4cc9f0', '#4361ee', '#f72585', '#b5179e', 
-                            '#7209b7', '#3f37c9', '#4895ef', '#cccccc'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
-                        title: { display: true, text: 'Estado de Lista' }
+        function deletePermanently(id) {
+            event.stopPropagation();
+            if(confirm('¿Deseas eliminar este pendiente de forma definitiva e irreversible?')) { 
+                const task = tasks.find(t => t.id === id);
+                tasks = tasks.filter(t => t.id !== id); 
+                saveData(); 
+                renderFolders();
+                renderTasks(); 
+                
+                if (task && selectedFolder === task.folder) {
+                    const remaining = tasks.filter(t => t.folder === task.folder && !t.completed && !t.deleted).length;
+                    if (remaining === 0) {
+                        exitFolderView();
                     }
                 }
-            });
+            }
         }
 
-        // Nueva función para el gráfico de pastel de interesados por cargo
-        function renderChartInteresados(labels, data) {
-            const ctx = document.getElementById('chartInteresadosCargo').getContext('2d');
-            if(chartInteresadosInstance) chartInteresadosInstance.destroy();
-            chartInteresadosInstance = new Chart(ctx, {
-                type: 'pie', // Gráfico de Biscocho/Pastel
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: [
-                            '#10b981', '#fb8500', '#ffb703', '#8ecae6', 
-                            '#219ebc', '#023047', '#ff595e', '#8ac926'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
-                        title: { display: true, text: 'Interesados por Cargo' }
-                    }
-                }
+        // --- REGISTRO DEL SERVICE WORKER (NECESARIO PARA PWA EN ANDROID/IOS) ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker registrado con éxito.', reg.scope))
+                .catch(err => console.error('Error al registrar el Service Worker:', err));
             });
         }
-
-        // Script para insertar el logo dinámicamente
-        window.addEventListener('load', function() {
-            const logo = document.createElement('img');
-            logo.src = 'https://lh3.googleusercontent.com/d/1MjgNe-zgyiBPShxkwT5053JND1hc4jY8';
-            logo.alt = 'Logo Empresa';
-            logo.style.display = 'block';
-            logo.style.margin = '0 auto 20px auto';
-            logo.style.maxWidth = '200px';
-            const h2 = document.querySelector('h2');
-            document.body.insertBefore(logo, h2);
-        });
     </script>
 </body>
 </html>
