@@ -34,11 +34,13 @@
             --sidebar-bg: #0f172a;
         }
 
+        /* --- MEJORAS NATIVAS PARA MÓVILES (iOS / Android) --- */
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            -webkit-tap-highlight-color: transparent; /* Quita el destello gris al tocar la pantalla en iOS */
         }
 
         body {
@@ -48,6 +50,13 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            overscroll-behavior-y: none; /* Evita el efecto de "rebote" elástico al hacer scroll extremo */
+        }
+
+        input, select, textarea {
+            -webkit-appearance: none; /* Elimina estilos redondeados por defecto de Safari */
+            appearance: none;
+            font-size: 16px !important; /* IMPORTANTE: Previene el auto-zoom de iOS al tocar un campo de texto */
         }
 
         @media (min-width: 768px) {
@@ -66,6 +75,7 @@
             background-color: var(--sidebar-bg);
             color: white;
             padding: 15px 20px;
+            padding-top: max(15px, env(safe-area-inset-top)); /* Ajuste para la "ceja" en iPhones */
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -149,6 +159,8 @@
             justify-content: space-around;
             align-items: center;
             height: 60px;
+            padding-bottom: env(safe-area-inset-bottom); /* Ajuste para barra inferior iPhone */
+            height: calc(60px + env(safe-area-inset-bottom));
             width: 100%;
             z-index: 100;
             box-shadow: 0 2px 5px rgba(0,0,0,0.02);
@@ -172,6 +184,7 @@
             display: none;
             flex: 1;
             padding: 15px 15px 100px 15px;
+            padding-bottom: calc(100px + env(safe-area-inset-bottom)); /* Ajuste para barra inferior iPhone */
             overflow-y: auto;
             height: calc(100% - 60px);
         }
@@ -229,7 +242,7 @@
         .input-icon-wrapper { position: relative; display: flex; align-items: center; width: 100%; }
         .input-icon-wrapper i { position: absolute; left: 12px; color: var(--text-muted); }
         .input-icon-wrapper input, .input-icon-wrapper select, .input-icon-wrapper textarea {
-            width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.9rem; outline: none; background-color: #fafafa;
+            width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid var(--border); border-radius: 8px; outline: none; background-color: #fafafa;
         }
         
         /* Checkbox de WhatsApp */
@@ -681,7 +694,8 @@
                     alert('Se canceló la selección o no se concedieron permisos de contactos.');
                 }
             } else {
-                alert('⚠️ NOTA: El selector de contactos requiere HTTPS. Escribe el número a mano si abres el archivo localmente.');
+                // Mensaje actualizado para dispositivos iOS
+                alert('⚠️ NOTA: El sistema operativo de este dispositivo (ej. iPhone) restringe el acceso directo a los contactos desde el navegador. Por favor, digita el número manualmente.');
             }
         }
 
