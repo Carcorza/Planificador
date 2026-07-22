@@ -1,16 +1,15 @@
-
 {
   "short_name": "Planeador",
   "name": "Planeador de Pendientes Profesional",
   "icons": [
     {
-      "src": "./logo planificador.png",
+      "src": "https://carcorza.github.io/Planificador/logo%20planificador.png",
       "type": "image/png",
       "sizes": "512x512",
       "purpose": "any maskable"
     }
   ],
-  "start_url": "./index.html",
+  "start_url": "https://carcorza.github.io/Planificador/index.html",
   "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "display": "standalone",
