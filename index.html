@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard de Llamadas</title>
+    
+    <!-- Librería para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        :root {
+            --primary: #4361ee;
+            --secondary: #3f37c9;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text: #333333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 15px;
+        }
+        h2 {
+            text-align: center;
+            color: var(--primary);
+            margin-top: 0;
+        }
+        
+        /* =========================================
+           NUEVO: Estilos para los botones de las pestañas
+           ========================================= */
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .tab-btn {
+            padding: 10px 20px;
+            cursor: pointer;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        .tab-btn:hover {
+            background-color: #5a6268;
+        }
+        .tab-btn.active {
+            background-color: var(--primary);
+        }
+        .hidden-view {
+            display: none !important;
+        }
+        /* ========================================= */
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+            align-items: flex-end;
+        }
+        .control-group {
+            flex: 1;
+            min-width: 140px;
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-size: 0.85em;
+            font-weight: bold;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        input[type="date"], select, button {
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-family: inherit;
+            background-color: white;
+            font-size: 0.95em;
+            outline: none;
+        }
+        select, button {
+            cursor: pointer;
+        }
+        .btn-export {
+            background-color: #10b981;
+            color: white;
+            border: none;
+            font-weight: bold;
+            padding: 10px 15px;
+            transition: background 0.3s;
+        }
+        .btn-export:hover {
+            background-color: #059669;
+        }
+        .kpi-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        .kpi-card {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .kpi-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .kpi-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: capitalize;
+        }
+        
+        /* Contenedor dinámico para organizar los 3 gráficos */
+        .charts-wrapper {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        .chart-container {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+            height: 300px;
+        }
+        
+        .loading {
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 15px;
+            padding: 10px;
+            background: #e8ecff;
+            border-radius: 5px;
+        }
+        
+        .table-container {
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+        th, td {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.9em;
+        }
+        th {
+            background-color: #f1f3f5;
+            color: #444;
+        }
+        hr.divider {
+            border: 0;
+            height: 2px;
+            background: #e2e8f0;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Dashboard de Llamadas</h2>
+
+    <!-- =========================================
+         NUEVO: Botones para cambiar de vista 
+         ========================================= -->
+    <div class="tab-container">
+        <button id="btn-dashboard" class="tab-btn active" onclick="switchView('dashboard')">Ver Dashboard</button>
+        <button id="btn-exportar" class="tab-btn" onclick="switchView('exportar')">Ver Módulo de Exportación</button>
+    </div>
+
+    <!-- =========================================
+         SECCIÓN 1: DASHBOARD (Visible por defecto)
+         ========================================= -->
+    <div id="view-dashboard">
+        <div id="status" class="loading">Cargando datos seguros desde Google Sheets...</div>
+
+        <!-- Filtros principales de fecha y usuario -->
+        <div class="controls">
+            <div class="control-group">
+                <label for="startDate">Desde:</label>
+                <input type="date" id="startDate">
+            </div>
+            <div class="control-group">
+                <label for="endDate">Hasta:</label>
+                <input type="date" id="endDate">
+            </div>
+            <div class="control-group">
+                <label id="userLabel" for="userFilter">Funcionario / Asesor:</label>
+                <select id="userFilter">
+                    <option value="">Cargando funcionarios...</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Tarjetas de resumen (KPIs) dinámicas -->
+        <div class="kpi-container" id="kpi-container"></div>
+
+        <!-- Gráficos agrupados -->
+        <div class="charts-wrapper">
+            <div class="chart-container">
+                <canvas id="chartCargo"></canvas>
+            </div>
+            <div class="chart-container">
+                <canvas id="chartLista"></canvas>
+            </div>
+            <!-- Nuevo Gráfico -->
+            <div class="chart-container">
+                <canvas id="chartInteresadosCargo"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================
+         SECCIÓN 2: EXPORTACIÓN (Oculta por defecto)
+         ========================================= -->
+    <div id="view-exportar" class="hidden-view">
+        <hr class="divider">
+        <h2>Módulo de Exportación de Datos</h2>
+
+        <!-- Controles de la Tabla Exportable -->
+        <div class="controls">
+            <div class="control-group">
+                <label for="listaFilter">Filtrar tabla por Estado de Lista:</label>
+                <select id="listaFilter">
+                    <option value="TODOS">Todos los estados</option>
+                </select>
+            </div>
+            <div class="control-group" style="flex: 0 1 auto;">
+                <button id="btnExport" class="btn-export">Exportar a CSV 📥</button>
+            </div>
+        </div>
+
+        <!-- Tabla de visualización de datos filtrados -->
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Cédula</th>
+                        <th>Nombre</th>
+                        <th>Cargo</th>
+                        <th>Celular</th>
+                        <th>Estado Lista</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody">
+                    <!-- Los datos se inyectarán aquí -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        // =========================================
+        // NUEVA FUNCIÓN: Cambiar entre Dashboard y Exportación
+        // =========================================
+        function switchView(view) {
+            if (view === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden-view');
+                document.getElementById('view-exportar').classList.add('hidden-view');
+                document.getElementById('btn-dashboard').classList.add('active');
+                document.getElementById('btn-exportar').classList.remove('active');
+            } else {
+                document.getElementById('view-dashboard').classList.add('hidden-view');
+                document.getElementById('view-exportar').classList.remove('hidden-view');
+                document.getElementById('btn-dashboard').classList.remove('active');
+                document.getElementById('btn-exportar').classList.add('active');
+            }
+        }
+
+        // =========================================
+        // TU CÓDIGO ORIGINAL INTACTO DESDE AQUÍ
+        // =========================================
+        
+        // ID de tu hoja de cálculo de Google
+        const sheetID = '1VUkxrVjr2P2_XZYGGnSk08SHGw4gvxQlRURVsEYryZI';
+        
+        let rawData = [];
+        let currentFilteredData = [];
+        let chartCargoInstance = null;
+        let chartListaInstance = null;
+        let chartInteresadosInstance = null; // Instancia para el nuevo gráfico
+        let userColumnKey = null;
+
+        window.onload = () => {
+            fetchData();
+            
+            document.getElementById('startDate').addEventListener('change', filterAndUpdate);
+            document.getElementById('endDate').addEventListener('change', filterAndUpdate);
+            document.getElementById('userFilter').addEventListener('change', filterAndUpdate);
+            
+            document.getElementById('listaFilter').addEventListener('change', actualizarTabla);
+            document.getElementById('btnExport').addEventListener('click', exportarCSV);
+        };
+
+        function fetchData() {
+            const jsonpURL = `https://docs.google.com/spreadsheets/d/${sheetID}/gviz/tq?tqx=responseHandler:handleData`;
+            const script = document.createElement('script');
+            script.src = jsonpURL;
+            script.onerror = function() {
+                document.getElementById('status').innerText = 'Error de conexión. Asegúrate de estar conectado a internet.';
+                document.getElementById('status').style.color = 'red';
+            };
+            document.head.appendChild(script);
+        }
+
+        window.handleData = function(response) {
+            try {
+                if (!response || !response.table) {
+                    document.getElementById('status').innerText = 'Error: Estructura de tabla no reconocida.';
+                    document.getElementById('status').style.color = 'red';
+                    return;
+                }
+
+                const cols = response.table.cols.map(col => col ? (col.label || '').trim() : '');
+                const rows = response.table.rows;
+
+                rawData = rows.map(row => {
+                    let rowDataObj = {};
+                    if (row && row.c) {
+                        row.c.forEach((cell, index) => {
+                            const colName = cols[index];
+                            if (colName) {
+                                let val = '';
+                                if (cell) {
+                                    val = cell.f !== undefined && cell.f !== null ? cell.f : (cell.v !== undefined && cell.v !== null ? cell.v : '');
+                                }
+                                rowDataObj[colName] = String(val).trim();
+                            }
+                        });
+                    }
+                    return rowDataObj;
+                });
+
+                rawData = rawData.filter(row => row['Hora de llamada'] && row['Hora de llamada'] !== '');
+
+                if (rawData.length === 0) {
+                    document.getElementById('status').innerText = 'Error: No se encontraron datos válidos.';
+                    document.getElementById('status').style.color = 'red';
+                    return;
+                }
+
+                document.getElementById('status').style.display = 'none';
+                
+                configurarFiltroUsuario();
+                configurarFiltroLista(); 
+                establecerFechasPorDefecto();
+                filterAndUpdate();
+
+            } catch (error) {
+                console.error(error);
+                document.getElementById('status').innerText = 'Ocurrió un error procesando los datos: ' + error.message;
+                document.getElementById('status').style.color = 'red';
+            }
+        };
+
+        function configurarFiltroUsuario() {
+            const userFilterSelect = document.getElementById('userFilter');
+            userFilterSelect.innerHTML = '<option value="">Todos los funcionarios</option>';
+            if (rawData.length === 0) return;
+
+            const keys = Object.keys(rawData[0]);
+            const keywords = ['asesor', 'usuario', 'funcionario', 'agente', 'operador', 'responsable', 'registrado', 'creado', 'quien'];
+            
+            userColumnKey = keys.find(key => {
+                const lowerKey = key.toLowerCase();
+                return keywords.some(keyword => lowerKey.includes(keyword));
+            });
+
+            if (!userColumnKey) {
+                userColumnKey = keys.find(key => key.toLowerCase().includes('nombre completo'));
+            }
+
+            if (userColumnKey) {
+                document.getElementById('userLabel').innerText = `Filtrar por ${userColumnKey}:`;
+                const usuariosUnicos = [...new Set(rawData.map(row => (row[userColumnKey] || '').trim()))]
+                    .filter(val => val !== '').sort();
+
+                usuariosUnicos.forEach(usuario => {
+                    const option = document.createElement('option');
+                    option.value = usuario;
+                    option.text = usuario;
+                    userFilterSelect.appendChild(option);
+                });
+            } else {
+                document.getElementById('userLabel').innerText = 'Funcionario / Asesor:';
+                userFilterSelect.innerHTML += '<option disabled>(No se halló columna)</option>';
+            }
+        }
+
+        function configurarFiltroLista() {
+            const listaFilterSelect = document.getElementById('listaFilter');
+            listaFilterSelect.innerHTML = '<option value="TODOS">Todos los estados</option>';
+            
+            const estadosUnicos = [...new Set(rawData.map(row => (row['LISTA'] || 'Sin clasificar').trim()))]
+                    .filter(val => val !== '').sort();
+
+            estadosUnicos.forEach(estado => {
+                const option = document.createElement('option');
+                option.value = estado;
+                option.text = estado;
+                listaFilterSelect.appendChild(option);
+            });
+        }
+
+        function parseSheetDate(dateString) {
+            if(!dateString) return null;
+            let datePart = dateString.split(',')[0].trim(); 
+            let parts = datePart.split('/');
+            if(parts.length === 3) {
+                return `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+            }
+            return null;
+        }
+
+        function establecerFechasPorDefecto() {
+            let fechasValidas = rawData.map(r => parseSheetDate(r['Hora de llamada'])).filter(d => d).sort();
+            if(fechasValidas.length > 0) {
+                document.getElementById('startDate').value = fechasValidas[0]; 
+                document.getElementById('endDate').value = fechasValidas[fechasValidas.length - 1]; 
+            }
+        }
+
+        function filterAndUpdate() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            const selectedUser = document.getElementById('userFilter').value;
+
+            currentFilteredData = rawData.filter(row => {
+                let rowDate = parseSheetDate(row['Hora de llamada']);
+                if(!rowDate) return false;
+                
+                let inRange = true;
+                if(start && rowDate < start) inRange = false;
+                if(end && rowDate > end) inRange = false;
+                
+                if(inRange && selectedUser && userColumnKey) {
+                    let rowUser = (row[userColumnKey] || '').trim();
+                    if(rowUser !== selectedUser) inRange = false;
+                }
+                return inRange;
+            });
+
+            actualizarKPIs(currentFilteredData);
+            actualizarGraficos(currentFilteredData);
+            actualizarTabla(); 
+        }
+
+        function actualizarKPIs(data) {
+            const kpiContainer = document.getElementById('kpi-container');
+            const cargosCount = {};
+            
+            data.forEach(row => {
+                let cargo = (row['Cargo'] || 'Desconocido').trim().toLowerCase();
+                if (cargo !== '') {
+                    cargosCount[cargo] = (cargosCount[cargo] || 0) + 1;
+                }
+            });
+
+            let htmlCards = `
+                <div class="kpi-card">
+                    <div class="kpi-value">${data.length}</div>
+                    <div class="kpi-label">Total Llamadas</div>
+                </div>
+            `;
+
+            Object.keys(cargosCount).forEach(cargo => {
+                htmlCards += `
+                    <div class="kpi-card">
+                        <div class="kpi-value">${cargosCount[cargo]}</div>
+                        <div class="kpi-label">${cargo}</div>
+                    </div>
+                `;
+            });
+
+            kpiContainer.innerHTML = htmlCards;
+        }
+
+        function actualizarGraficos(data) {
+            const cargosCount = {};
+            const listaCount = {};
+            const interesadosCargoCount = {}; // Nuevo contador
+
+            data.forEach(row => {
+                let cargo = (row['Cargo'] || 'Desconocido').trim();
+                let lista = (row['LISTA'] || 'Sin clasificar').trim();
+
+                cargosCount[cargo] = (cargosCount[cargo] || 0) + 1;
+                listaCount[lista] = (listaCount[lista] || 0) + 1;
+                
+                // Lógica para el nuevo gráfico (Filtramos solo los 'INTERESADOS')
+                if(lista.toUpperCase() === 'INTERESADO') {
+                    interesadosCargoCount[cargo] = (interesadosCargoCount[cargo] || 0) + 1;
+                }
+            });
+
+            renderChartCargo(Object.keys(cargosCount), Object.values(cargosCount));
+            renderChartLista(Object.keys(listaCount), Object.values(listaCount));
+            renderChartInteresados(Object.keys(interesadosCargoCount), Object.values(interesadosCargoCount)); // Renderizamos nuevo gráfico
+        }
+
+        function actualizarTabla() {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+            
+            const estadoFiltro = document.getElementById('listaFilter').value;
+            
+            const tableData = currentFilteredData.filter(row => {
+                if(estadoFiltro === 'TODOS') return true;
+                let estadoFila = (row['LISTA'] || 'Sin clasificar').trim();
+                return estadoFila === estadoFiltro;
+            });
+
+            if (tableData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">No hay registros para este filtro</td></tr>';
+                return;
+            }
+
+            tableData.forEach(row => {
+                const tr = document.createElement('tr');
+                
+                let doc = row['Documento'] || '';
+                let nombre = row['Nombre Completo'] || '';
+                let cargo = row['Cargo'] || '';
+                let celular = row['Telefono'] || '';
+                let lista = row['LISTA'] || 'Sin clasificar';
+
+                tr.innerHTML = `
+                    <td>${doc}</td>
+                    <td>${nombre}</td>
+                    <td>${cargo}</td>
+                    <td>${celular}</td>
+                    <td>${lista}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function exportarCSV() {
+            let csv = [];
+            let rows = document.querySelectorAll("#dataTable tr");
+            
+            for (let i = 0; i < rows.length; i++) {
+                let row = [], cols = rows[i].querySelectorAll("td, th");
+                for (let j = 0; j < cols.length; j++) {
+                    let data = cols[j].innerText.replace(/"/g, '""');
+                    row.push('"' + data + '"');
+                }
+                csv.push(row.join(","));
+            }
+
+            let csvFile = new Blob(["\ufeff" + csv.join("\n")], {type: "text/csv;charset=utf-8;"});
+            let downloadLink = document.createElement("a");
+            downloadLink.download = "Listado_Filtrado_Dashboard.csv";
+            downloadLink.href = window.URL.createObjectURL(csvFile);
+            downloadLink.style.display = "none";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+
+        function renderChartCargo(labels, data) {
+            const ctx = document.getElementById('chartCargo').getContext('2d');
+            if(chartCargoInstance) chartCargoInstance.destroy(); 
+            chartCargoInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Llamadas por Cargo',
+                        data: data,
+                        backgroundColor: ['#4361ee', '#3f37c9', '#4895ef'],
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, title: { display: true, text: 'Distribución por Cargo' } }
+                }
+            });
+        }
+
+        function renderChartLista(labels, data) {
+            const ctx = document.getElementById('chartLista').getContext('2d');
+            if(chartListaInstance) chartListaInstance.destroy();
+            chartListaInstance = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#4cc9f0', '#4361ee', '#f72585', '#b5179e', 
+                            '#7209b7', '#3f37c9', '#4895ef', '#cccccc'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+                        title: { display: true, text: 'Estado de Lista' }
+                    }
+                }
+            });
+        }
+
+        // Nueva función para el gráfico de pastel de interesados por cargo
+        function renderChartInteresados(labels, data) {
+            const ctx = document.getElementById('chartInteresadosCargo').getContext('2d');
+            if(chartInteresadosInstance) chartInteresadosInstance.destroy();
+            chartInteresadosInstance = new Chart(ctx, {
+                type: 'pie', // Gráfico de Biscocho/Pastel
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            '#10b981', '#fb8500', '#ffb703', '#8ecae6', 
+                            '#219ebc', '#023047', '#ff595e', '#8ac926'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+                        title: { display: true, text: 'Interesados por Cargo' }
+                    }
+                }
+            });
+        }
+
+        // Script para insertar el logo dinámicamente
+        window.addEventListener('load', function() {
+            const logo = document.createElement('img');
+            logo.src = 'https://lh3.googleusercontent.com/d/1MjgNe-zgyiBPShxkwT5053JND1hc4jY8';
+            logo.alt = 'Logo Empresa';
+            logo.style.display = 'block';
+            logo.style.margin = '0 auto 20px auto';
+            logo.style.maxWidth = '200px';
+            const h2 = document.querySelector('h2');
+            document.body.insertBefore(logo, h2);
+        });
+    </script>
+</body>
+</html>
