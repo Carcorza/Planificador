@@ -41,7 +41,7 @@
             margin: 0;
             padding: 0;
             font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            -webkit-tap-highlight-color: transparent; /* Quita el destello gris al tocar la pantalla en iOS */
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
@@ -51,13 +51,13 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            overscroll-behavior-y: none; /* Evita el efecto de "rebote" elástico al hacer scroll extremo */
+            overscroll-behavior-y: none;
         }
 
         input, select, textarea {
-            -webkit-appearance: none; /* Elimina estilos redondeados por defecto de Safari */
+            -webkit-appearance: none;
             appearance: none;
-            font-size: 16px !important; /* IMPORTANTE: Previene el auto-zoom de iOS al tocar un campo de texto */
+            font-size: 16px !important;
         }
 
         @media (min-width: 768px) {
@@ -76,7 +76,7 @@
             background-color: var(--sidebar-bg);
             color: white;
             padding: 15px 20px;
-            padding-top: max(15px, env(safe-area-inset-top)); /* Ajuste para la "ceja" en iPhones */
+            padding-top: max(15px, env(safe-area-inset-top));
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -121,7 +121,6 @@
         .folder-name-container { display: flex; align-items: center; gap: 10px; font-weight: 500; }
         .delete-folder-btn { background: transparent; border: none; color: #94a3b8; cursor: pointer; font-size: 1.1rem; }
 
-        /* Botón de instalación PWA en la barra lateral */
         .pwa-install-btn {
             background-color: var(--success);
             color: white;
@@ -132,7 +131,7 @@
             font-size: 0.9rem;
             cursor: pointer;
             margin-top: 15px;
-            display: none; /* Se activa si el navegador lo permite */
+            display: none;
             align-items: center;
             justify-content: center;
             gap: 8px;
@@ -160,7 +159,7 @@
             justify-content: space-around;
             align-items: center;
             height: 60px;
-            padding-bottom: env(safe-area-inset-bottom); /* Ajuste para barra inferior iPhone */
+            padding-bottom: env(safe-area-inset-bottom);
             height: calc(60px + env(safe-area-inset-bottom));
             width: 100%;
             z-index: 100;
@@ -185,7 +184,7 @@
             display: none;
             flex: 1;
             padding: 15px 15px 100px 15px;
-            padding-bottom: calc(100px + env(safe-area-inset-bottom)); /* Ajuste para barra inferior iPhone */
+            padding-bottom: calc(100px + env(safe-area-inset-bottom));
             overflow-y: auto;
             height: calc(100% - 60px);
         }
@@ -198,7 +197,6 @@
         .sheet-header h2 { font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
         .sheet-header p { color: #94a3b8; font-size: 0.8rem; margin-top: 2px; }
 
-        /* VISTA DE TARJETAS DE CARPETAS */
         .folders-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -228,7 +226,6 @@
         .folder-card-title { font-weight: 700; font-size: 0.95rem; color: var(--text-main); word-break: break-word; }
         .folder-card-counter { font-size: 0.75rem; background-color: #fee2e2; color: var(--danger); padding: 3px 8px; border-radius: 20px; font-weight: 700; }
 
-        /* BOTÓN DE RETORNO */
         .btn-back-folders {
             background-color: var(--primary); color: white; border: none; padding: 10px 14px; border-radius: 8px;
             font-weight: bold; font-size: 0.9rem; cursor: pointer; display: inline-flex; align-items: center; gap: 8px;
@@ -246,11 +243,9 @@
             width: 100%; padding: 10px 12px 10px 38px; border: 1.5px solid var(--border); border-radius: 8px; outline: none; background-color: #fafafa;
         }
         
-        /* Adjuntos */
         .file-upload-wrapper input[type="file"] { padding: 8px 12px 8px 38px; font-size: 0.85rem; color: #475569; background-color: #f8fafc; }
         .file-upload-wrapper input[type="file"]::file-selector-button { background-color: #e2e8f0; border: none; padding: 6px 12px; border-radius: 4px; font-weight: bold; color: var(--text-main); margin-right: 10px; cursor: pointer; }
 
-        /* Checkbox de WhatsApp */
         .whatsapp-checkbox-container {
             display: flex;
             align-items: center;
@@ -278,7 +273,6 @@
             gap: 6px;
         }
 
-        /* Botón de Contactos */
         .btn-contacts {
             background-color: var(--primary); color: white; border: none; width: 65px; height: 100%; border-radius: 0 8px 8px 0;
             cursor: pointer; font-size: 0.85rem; position: absolute; right: 0; top: 0; display: flex; align-items: center; justify-content: center; gap: 4px;
@@ -289,10 +283,8 @@
             display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 5px;
         }
 
-        /* CONTENEDOR DE TARJETAS */
         .tasks-container { display: flex; flex-direction: column; gap: 10px; }
 
-        /* TARJETAS COMPACTAS DESPLEGABLES */
         .task-card {
             background-color: var(--bg-card); border-radius: 8px; padding: 10px 14px;
             border: 1px solid var(--border); border-left: 5px solid var(--primary);
@@ -329,8 +321,8 @@
         .btn-share { background-color: var(--share); color: white; }
         .btn-reopen { background-color: var(--primary); color: white; }
         .btn-delete { background-color: #f1f5f9; color: var(--danger); }
+        .btn-view-file { background-color: #0ea5e9; color: white; text-decoration: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; display: inline-flex; align-items: center; gap: 5px; font-weight: bold; cursor: pointer; border: none; }
 
-        /* MODAL DE CIERRE */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background-color: rgba(0,0,0,0.5); z-index: 200;
@@ -510,8 +502,18 @@
                             <i class="fa-brands fa-whatsapp" style="font-size: 1.1rem; color: #166534;"></i> ¿Enviar WhatsApp al guardar?
                         </label>
                     </div>
+
+                    <!-- BOTONES DIRECTOS DE ENVÍO Y GUARDADO -->
+                    <div style="display: flex; gap: 8px; margin-top: 5px;">
+                        <button type="button" class="task-form-btn" style="background-color: var(--success); flex: 1;" onclick="sendDirectWhatsApp()">
+                            <i class="fa-brands fa-whatsapp"></i> Enviar WhatsApp
+                        </button>
+                        <button type="button" class="task-form-btn" style="background-color: var(--share); flex: 1;" onclick="sendDirectEmail()">
+                            <i class="fa-solid fa-share-nodes"></i> Enviar Correo
+                        </button>
+                    </div>
                     
-                    <button type="submit" class="task-form-btn" id="saveTaskBtn">
+                    <button type="submit" class="task-form-btn" id="saveTaskBtn" style="margin-top: 5px;">
                         <span id="btnText"><i class="fa-solid fa-floppy-disk"></i> Guardar Pendiente</span>
                         <i id="btnSpinner" class="fa-solid fa-circle-notch fa-spin" style="display:none; position:absolute;"></i>
                     </button>
@@ -582,7 +584,7 @@
         manifestLink.href = manifestURL;
         document.head.appendChild(manifestLink);
 
-        // Variables de datos (Inicia limpio sin carpetas por defecto, tal como pediste anteriormente)
+        // Variables de datos
         let folders = JSON.parse(localStorage.getItem('planner_folders')) || [];
         let tasks = JSON.parse(localStorage.getItem('planner_tasks')) || [];
         let selectedFolder = null;
@@ -830,7 +832,6 @@
             document.getElementById('newTabIcon').className = 'fa-solid fa-circle-plus';
         }
 
-        // --- PROCESAMIENTO DE ARCHIVOS ADJUNTOS ---
         function processFile(file) {
             return new Promise((resolve) => {
                 if (!file) return resolve(null);
@@ -842,18 +843,18 @@
                         img.onload = () => {
                             const canvas = document.createElement('canvas');
                             let width = img.width, height = img.height;
-                            const MAX = 1000;
+                            const MAX = 1200;
                             if (width > height && width > MAX) { height *= MAX / width; width = MAX; }
                             else if (height > MAX) { width *= MAX / height; height = MAX; }
                             canvas.width = width; canvas.height = height;
                             const ctx = canvas.getContext('2d');
                             ctx.drawImage(img, 0, 0, width, height);
-                            resolve({ name: file.name, type: 'image/jpeg', base64: canvas.toDataURL('image/jpeg', 0.6) });
+                            resolve({ name: file.name, type: file.type, base64: canvas.toDataURL(file.type, 0.85) });
                         };
                         img.src = base64Str;
                     } else {
-                        if (file.size > 1.5 * 1024 * 1024) {
-                            alert("El documento pesa más de 1.5MB y no se guardará.");
+                        if (file.size > 2 * 1024 * 1024) {
+                            alert("El archivo pesa más de 2MB y no se guardará.");
                             resolve(null);
                         } else { resolve({ name: file.name, type: file.type, base64: base64Str }); }
                     }
@@ -862,7 +863,103 @@
             });
         }
 
-        // --- COMPARTIR POR CORREO / WHATSAPP / NATIVO ---
+        // --- APERTURA Y DESCARGA DIRECTA DE ARCHIVOS (IMÁGENES Y DOCUMENTOS) ---
+        function viewAttachment(id) {
+            event.stopPropagation();
+            const task = tasks.find(t => t.id === id);
+            if (!task || !task.fileBase64) return;
+
+            if (task.fileType && task.fileType.startsWith('image/')) {
+                // Visualizador natural a tamaño real para fotos
+                const win = window.open();
+                win.document.write(`
+                    <html>
+                    <head><title>${task.fileName || 'Imagen Adjunta'}</title></head>
+                    <body style="margin:0; background:#111; display:flex; justify-content:center; align-items:center; height:100vh;">
+                        <img src="${task.fileBase64}" style="max-width:100%; max-height:100%; object-fit:contain;" />
+                    </body>
+                    </html>
+                `);
+            } else {
+                // Forzar descarga limpia con el formato y extensión original para documentos (PDF, etc.)
+                const a = document.createElement('a');
+                a.href = task.fileBase64;
+                a.download = task.fileName || 'documento_adjunto';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            }
+        }
+
+        function sendDirectWhatsApp() {
+            const name = document.getElementById('taskName').value.trim();
+            const date = document.getElementById('taskDate').value;
+            const time = document.getElementById('taskTime').value;
+            const phone = document.getElementById('taskPhone').value.trim();
+            const obs = document.getElementById('taskObs').value.trim();
+
+            if (!name) {
+                alert("Por favor escribe al menos el nombre de la actividad para enviar.");
+                return;
+            }
+
+            const mensaje = `*¡Nuevo Pendiente!* 📋\n\n` +
+                            `• *Actividad:* ${name}\n` +
+                            `• *Fecha:* ${date} - ${time}\n` +
+                            `• *Detalles:* ${obs || 'Sin observaciones.'}`;
+            
+            const urlText = encodeURIComponent(mensaje);
+            let whatsappUrl = `https://wa.me/?text=${urlText}`;
+            
+            if (phone) {
+                let cleanPhone = phone.replace(/[^0-9]/g, '');
+                if (cleanPhone.length === 10 && cleanPhone.startsWith('3')) {
+                    cleanPhone = '57' + cleanPhone;
+                }
+                whatsappUrl = `https://wa.me/${cleanPhone}?text=${urlText}`;
+            }
+            window.open(whatsappUrl, '_blank');
+        }
+
+        async function sendDirectEmail() {
+            const name = document.getElementById('taskName').value.trim();
+            const folder = document.getElementById('taskFolder').value;
+            const date = document.getElementById('taskDate').value;
+            const time = document.getElementById('taskTime').value;
+            const obs = document.getElementById('taskObs').value.trim();
+
+            if (!name) {
+                alert("Por favor escribe el nombre de la actividad.");
+                return;
+            }
+
+            let title = `Pendiente: ${name}`;
+            let text = `*${name}*\nCarpeta: ${folder || 'General'}\nFecha: ${date} - ${time}\nDetalles: ${obs || 'Sin observaciones.'}`;
+
+            const fileInput = document.getElementById('taskFile');
+            let fileData = fileInput.files.length > 0 ? await processFile(fileInput.files[0]) : null;
+
+            let shareData = { title, text };
+            if (fileData && fileData.base64) {
+                try {
+                    const res = await fetch(fileData.base64);
+                    const blob = await res.blob();
+                    const file = new File([blob], fileData.name, { type: fileData.type });
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        shareData.files = [file];
+                    }
+                } catch(e) {}
+            }
+
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(text)}`;
+                }
+            }
+        }
+
         async function shareTaskEmail(id) {
             event.stopPropagation();
             const task = tasks.find(t => t.id === id);
@@ -881,7 +978,7 @@
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         shareData.files = [file];
                     }
-                } catch(e) { console.error("Error al adjuntar archivo."); }
+                } catch(e) {}
             }
 
             try {
@@ -1000,7 +1097,7 @@
                         ${task.observation ? `<div class="task-desc">${task.observation}</div>` : ''}
                         <div class="task-meta-row">
                             ${task.phone ? `<div class="task-meta-item"><i class="fa-solid fa-phone"></i> <span><strong>Tel:</strong> ${task.phone}</span></div>` : ''}
-                            ${task.fileBase64 ? `<div class="task-meta-item" style="color:var(--primary);"><i class="fa-solid fa-paperclip"></i> <span><strong>Adjunto:</strong> ${task.fileName}</span></div>` : ''}
+                            ${task.fileBase64 ? `<div class="task-meta-item" style="display:flex; align-items:center; justify-content:space-between; width:100%;"><span style="color:var(--primary);"><i class="fa-solid fa-paperclip"></i> <strong>Adjunto:</strong> ${task.fileName}</span> <button type="button" class="btn-view-file" onclick="viewAttachment('${task.id}')"><i class="fa-solid fa-eye"></i> Ver archivo</button></div>` : ''}
                             <div class="task-meta-item"><i class="fa-solid fa-triangle-exclamation"></i> <span><strong>Prioridad:</strong> ${task.priority === 'high' ? 'Alta' : 'Normal'}</span></div>
                         </div>
                         <div class="task-actions">
@@ -1039,7 +1136,7 @@
                             </div>
                             <div class="task-meta-row">
                                 <div class="task-meta-item"><i class="fa-solid fa-calendar"></i> <span><strong>Fecha original:</strong> ${task.date} - ${task.time}</span></div>
-                                ${task.fileBase64 ? `<div class="task-meta-item" style="color:var(--primary);"><i class="fa-solid fa-paperclip"></i> <span><strong>Adjunto:</strong> ${task.fileName}</span></div>` : ''}
+                                ${task.fileBase64 ? `<div class="task-meta-item" style="display:flex; align-items:center; justify-content:space-between; width:100%;"><span style="color:var(--primary);"><i class="fa-solid fa-paperclip"></i> <strong>Adjunto:</strong> ${task.fileName}</span> <button type="button" class="btn-view-file" onclick="viewAttachment('${task.id}')"><i class="fa-solid fa-eye"></i> Ver archivo</button></div>` : ''}
                             </div>
                             <div class="task-actions">
                                 <button class="btn-action btn-share" onclick="shareTaskEmail('${task.id}')"><i class="fa-solid fa-share-nodes"></i> Enviar</button>
